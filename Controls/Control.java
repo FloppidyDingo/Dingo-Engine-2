@@ -5,7 +5,7 @@
  */
 package Controls;
 
-import objects.Entity;
+import objects.Node;
 
 /**
  *
@@ -13,6 +13,6 @@ import objects.Entity;
  */
 public abstract class Control {
     
-    public abstract void perform(Entity e);
+    public abstract void perform(Node e);
     
 }

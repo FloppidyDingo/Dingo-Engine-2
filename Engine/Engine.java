@@ -4,13 +4,20 @@
  */
 package Engine;
 
+import Controls.ButtonControl;
+import GUI.Button;
+import GUI.GUI;
 import objects.Node;
 import Media.AdvancedMedia.Audio.DingoSoundDriver;
 import Media.MediaPipeline;
 import java.awt.Dimension;
+import java.awt.Point;
 import java.awt.Rectangle;
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
+import java.awt.event.MouseEvent;
+import java.awt.event.MouseListener;
+import java.awt.event.MouseMotionListener;
 import java.util.ArrayList;
 import java.util.List;
 import javax.swing.JFrame;
@@ -29,7 +36,7 @@ public abstract class Engine {
 
     //<editor-fold defaultstate="collapsed" desc="Engine Variables">
     private static final int MapVersion = 2;
-    private static final String version = "2.0.0";
+    private static final String version = "2.0.1";
     private int fps;
     private List<Extension> extensions;
     private List<KeyMap> keys;
@@ -38,6 +45,7 @@ public abstract class Engine {
     public GPU gpu;
     public JFrame stage;
     public MediaPipeline media;
+    public GUI guiNode;
 //</editor-fold>
     //<editor-fold defaultstate="collapsed" desc="Physics Variables">
     private List<Entity> entityList;//solid entities
@@ -83,8 +91,87 @@ public abstract class Engine {
         extensions = new ArrayList<>();
         keys = new ArrayList<>();
         stage = new JFrame();
-        stage.setMinimumSize(new Dimension(settings.getResolutionX(), settings.getInternalResY()));
+        stage.setMinimumSize(new Dimension(settings.getResolutionX(), settings.getResolutionY()));
         gpu = new GPU(settings);
+        gpu.addMouseMotionListener(new MouseMotionListener() {
+            @Override
+            public void mouseDragged(MouseEvent e) {
+                
+            }
+
+            @Override
+            public void mouseMoved(MouseEvent e) {
+                for (Node node : guiNode.getGuiList()) {
+                    Rectangle r = new Rectangle(node.getX() - (node.getWidth() / 2), node.getY() - (node.getHeight() / 2),
+                            node.getWidth(), node.getHeight());
+                    Point point = new Point((int)(e.getX() * ((float)gpu.getResX() / gpu.getWidth())) - (gpu.getResX() / 2), 
+                        (int)(e.getY() * ((float)gpu.getResY() / gpu.getHeight())) - (gpu.getResY() / 2));
+                    if(node instanceof Button){
+                        if (r.contains(point)) {
+                            ((ButtonControl) node.getControl()).onHover();
+                        }else{
+                            ((ButtonControl) node.getControl()).onIdle();
+                        }
+                    }
+                }
+            }
+        });
+        gpu.addMouseListener(new MouseListener() {
+            @Override
+            public void mouseClicked(MouseEvent e) {
+                for (Node node : guiNode.getGuiList()) {
+                    Rectangle r = new Rectangle(node.getX() - (node.getWidth() / 2), node.getY() - (node.getHeight() / 2),
+                            node.getWidth(), node.getHeight());
+                    Point point = new Point((int)(e.getX() * ((float)gpu.getResX() / gpu.getWidth())) - (gpu.getResX() / 2), 
+                        (int)(e.getY() * ((float)gpu.getResY() / gpu.getHeight())) - (gpu.getResY() / 2));
+                    if(r.contains(point)){
+                        if (node instanceof Button) {
+                            ((ButtonControl) node.getControl()).buttonPerform(e);
+                        }
+                    }
+                }
+            }
+
+            @Override
+            public void mousePressed(MouseEvent e) {
+                for (Node node : guiNode.getGuiList()) {
+                    Rectangle r = new Rectangle(node.getX() - (node.getWidth() / 2), node.getY() - (node.getHeight() / 2),
+                            node.getWidth(), node.getHeight());
+                    Point point = new Point((int)(e.getX() * ((float)gpu.getResX() / gpu.getWidth())) - (gpu.getResX() / 2), 
+                        (int)(e.getY() * ((float)gpu.getResY() / gpu.getHeight())) - (gpu.getResY() / 2));
+                    if(r.contains(point)){
+                        if (node instanceof Button) {
+                            ((ButtonControl) node.getControl()).onPress();
+                        }
+                    }
+                }
+            }
+
+            @Override
+            public void mouseReleased(MouseEvent e) {
+                for (Node node : guiNode.getGuiList()) {
+                    Rectangle r = new Rectangle(node.getX() - (node.getWidth() / 2), node.getY() - (node.getHeight() / 2),
+                            node.getWidth(), node.getHeight());
+                    Point point = new Point((int)(e.getX() * ((float)gpu.getResX() / gpu.getWidth())) - (gpu.getResX() / 2), 
+                        (int)(e.getY() * ((float)gpu.getResY() / gpu.getHeight())) - (gpu.getResY() / 2));
+                    if(r.contains(point)){
+                        if (node instanceof Button) {
+                            ((ButtonControl) node.getControl()).onRelease();
+                        }
+                    }
+                }
+            }
+
+            @Override
+            public void mouseEntered(MouseEvent e) {
+                
+            }
+
+            @Override
+            public void mouseExited(MouseEvent e) {
+                
+            }
+        });
         gpu.addKeyListener(new KeyListener() {
 
             @Override
@@ -116,6 +203,8 @@ public abstract class Engine {
                 }
             }
         });
+        guiNode = new GUI();
+        gpu.setGui(guiNode);
         stage.addWindowListener(new java.awt.event.WindowAdapter() {
             @Override
             public void windowClosing(java.awt.event.WindowEvent windowEvent) {
@@ -135,6 +224,11 @@ public abstract class Engine {
         triggerList = new ArrayList<>();
         spawnList = new ArrayList<>();
 //</editor-fold>
+        
+        if(settings.isFullScreen()){
+            stage.setUndecorated(true);
+            gpu.enterFullScreen(stage, settings.getDisplay(), settings);
+        }
         stage.add(gpu);
         stage.setVisible(true);
         gpu.setFocusable(true);
@@ -144,6 +238,16 @@ public abstract class Engine {
 
     private void frame2() {
         frame();
+        for (Node n : entityList) {
+            if (n.getControl() != null) {
+                n.getControl().perform(n);
+            }
+        }
+        for (Node n : guiNode.getGuiList()) {
+            if (n.getControl() != null) {
+                n.getControl().perform(n);
+            }
+        }
         extensions.stream().forEach((extension) -> {
             if (extension.isEnabled()) {
                 extension.frame();

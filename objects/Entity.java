@@ -6,7 +6,6 @@
 
 package objects;
 
-import Controls.Control;
 import Engine.GPU;
 import java.awt.Rectangle;
 import java.awt.image.BufferedImage;
@@ -29,7 +28,6 @@ public class Entity extends Node{
     private boolean solid;
     private boolean active;
     private BufferedImage image;
-    private Control control;
     private final List<Animation> ani;
     private boolean drawOffScreen;
     private final Rectangle bound;
@@ -256,14 +254,6 @@ public class Entity extends Node{
             }
         }
         return null;
-    }
-
-    public Control getControl() {
-        return control;
-    }
-
-    public void setControl(Control control) {
-        this.control = control;
     }
 
     @Override

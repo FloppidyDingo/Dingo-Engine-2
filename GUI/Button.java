@@ -5,34 +5,41 @@
  */
 package GUI;
 
-import java.awt.Graphics;
-import java.awt.event.MouseEvent;
-import java.awt.event.MouseListener;
+import Controls.BaseButtonControl;
+import Engine.GPU;
+import java.awt.AlphaComposite;
+import java.awt.Graphics2D;
 import java.awt.image.BufferedImage;
-import javax.swing.JPanel;
+import objects.Node;
 
 
 /**
  *
  * @author James
  */
-public class Button extends JPanel implements MouseListener{
+public class Button extends Node{
     private BufferedImage idle;
     private BufferedImage hover;
     private BufferedImage select;
     private ButtonAction action;
     private BufferedImage active;
+    private BufferedImage img;
+    private Label label;
 
-    public Button(BufferedImage idle, BufferedImage hover, BufferedImage select) {
+    public Button(int w, int h, BufferedImage idle, BufferedImage hover, BufferedImage select) {
         this.idle = idle;
         this.hover = hover;
         this.select = select;
-        this.addMouseListener(this);
+        this.setControl(new BaseButtonControl(this));
         active = idle;
+        label = new Label();
+        img = new BufferedImage(w, h, BufferedImage.TYPE_INT_ARGB);
     }
     
-    public Button() {
-        this.addMouseListener(this);
+    public Button(int w, int h) {
+        this.setControl(new BaseButtonControl(this));
+        label = new Label();
+        img = new BufferedImage(w, h, BufferedImage.TYPE_INT_ARGB);
     }
 
     public BufferedImage getIdle() {
@@ -68,35 +75,50 @@ public class Button extends JPanel implements MouseListener{
         this.action = event;
     }
 
-    @Override
-    public void mouseClicked(MouseEvent e) {
-        action.event(e);
+    public ButtonAction getOnAction() {
+        return action;
     }
 
     @Override
-    public void mousePressed(MouseEvent e) {
-        active = select;
+    public BufferedImage render(GPU gpu) {
+        Graphics2D fg2 = (Graphics2D)img.getGraphics();
+        fg2.clearRect(0, 0, img.getWidth(), img.getHeight());
+        fg2.setComposite(AlphaComposite.getInstance(AlphaComposite.CLEAR, 1));
+        fg2.fillRect(0, 0, img.getWidth(), img.getHeight());
+        fg2.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 1));
+        fg2.drawImage(active, 0, 0, img.getWidth(), img.getHeight(), null);
+        fg2.drawImage(label.render(gpu), 0, 0, img.getWidth(), img.getHeight(), null);
+        fg2.dispose();
+        return img;
     }
 
     @Override
-    public void mouseReleased(MouseEvent e) {
-        active = hover;
+    public int getWidth() {
+        return img.getWidth();
     }
 
     @Override
-    public void mouseEntered(MouseEvent e) {
-        active = hover;
+    public int getHeight() {
+        return img.getHeight();
     }
 
-    @Override
-    public void mouseExited(MouseEvent e) {
-        active = idle;
+    public Label getLabel() {
+        return label;
+    }
+
+    public void setLabel(Label Text) {
+        this.label = Text;
     }
     
-    @Override
-    public void paintComponent(Graphics g) {
-        super.paintComponent(g);
-        g.drawImage(active, 0, 0, this);
+    public void setText(String text){
+        label.setText(text);
     }
-
+    
+    public void setWidth(int w){
+        img = new BufferedImage(w, img.getHeight(), BufferedImage.TYPE_INT_ARGB);
+    }
+    
+    public void setHeight(int h){
+        img = new BufferedImage(img.getWidth(), h, BufferedImage.TYPE_INT_ARGB);
+    }
 }

@@ -139,6 +139,10 @@ public class MapLoader {
                         skinField = new Skin();
                         skinField.setID(attributes.getValue("id"));
                         skinField.setBaseImage(Utils.generateImage(imageURL + attributes.getValue("url")));
+                        String def = attributes.getValue("definition");
+                        if(def != null){
+                            skinField.bufferSkinDef(imageURL + attributes.getValue("definition"));
+                        }
                         element = "skin";
                         break;
                     } catch (IOException ex) {

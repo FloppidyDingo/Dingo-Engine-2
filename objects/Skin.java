@@ -58,7 +58,7 @@ public class Skin {
      * @param y2 The y coordinate of the bottom right corner
      */
     public void addFrame(int x1, int y1, int x2, int y2){
-        skins.add(new ViewPort(x1, y1, x2 - x1, y2 - y1));
+        skins.add(new ViewPort(x1, y1, x2 - x1 + 1, y2 - y1 + 1));
     }
     
     /**

@@ -5,14 +5,34 @@
  */
 package GUI;
 
+import java.util.ArrayList;
+import java.util.List;
+import objects.Node;
+
 /**
  *
  * @author James
  */
-public class GUI {
+public class GUI{
+    private final List<Node> guiList;
     
-    public static Button buildButtonFromXML(String path){
-        return null;
+    public GUI(){
+        guiList = new ArrayList<>();
     }
     
+    public void addNode(Node n){
+        guiList.add(n);
+    }
+    
+    public void removeNode(Node n){
+        guiList.remove(n);
+    }
+    
+    public void clear(){
+        guiList.clear();
+    }
+    
+    public List<Node> getGuiList(){
+        return guiList;
+    }
 }

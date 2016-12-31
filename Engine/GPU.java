@@ -63,7 +63,9 @@ public class GPU extends JPanel{
         lightGraphics.clearRect(0, 0, lightMap.getWidth(), lightMap.getHeight());
         frameBuffer.clearRect(0, 0, frame.getWidth(), frame.getHeight());
         overlayGraphics.setRenderingHint(RenderingHints.KEY_ANTIALIASING,    RenderingHints.VALUE_ANTIALIAS_ON);
-        overlayGraphics.clearRect(0, 0, overlay.getWidth(), overlay.getHeight());
+        overlayGraphics.setComposite(AlphaComposite.getInstance(AlphaComposite.CLEAR, 1));
+        overlayGraphics.fillRect(0, 0, overlay.getWidth(), overlay.getHeight());
+        overlayGraphics.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 1));
         for(Node item : scene.getItems()){
             BufferedImage temp = item.render(this);
             if (temp != null) {
@@ -119,7 +121,7 @@ public class GPU extends JPanel{
         if(fullScreen){
             Graphics2D g2 = (Graphics2D)buffer.getGraphics();
             g2.setColor(Color.BLACK);
-            g2.clearRect(0, 0, frame.getWidth(), frame.getHeight());
+            g2.fillRect(0, 0, frame.getWidth(), frame.getHeight());
             g2.drawImage(frame, 0, 0, this);
             g2.drawImage(lightMap, 0, 0, this);
             g2.drawImage(overlay, 0, 0, this);
@@ -134,7 +136,7 @@ public class GPU extends JPanel{
         }else{
             Graphics2D g2 = (Graphics2D)buffer.getGraphics();
             g2.setColor(Color.BLACK);
-            g2.clearRect(0, 0, frame.getWidth(), frame.getHeight());
+            g2.fillRect(0, 0, frame.getWidth(), frame.getHeight());
             g2.drawImage(frame, 0, 0, this);
             g2.drawImage(lightMap, 0, 0, this);
             g2.drawImage(overlay, 0, 0, this);

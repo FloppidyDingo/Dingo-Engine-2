@@ -110,7 +110,7 @@ public class Skin {
                         case 1:{
                             if(img.getRGB(x, y) == Color.BLACK.getRGB()){
                                 img.setRGB(x, y, Color.RED.getRGB());
-                                for(int y2 = y; y2 < img.getHeight(); y2++){
+                                for(int y2 = y + 1; y2 < img.getHeight(); y2++){
                                     if(img.getRGB(x, y2) == Color.BLACK.getRGB()){
                                         img.setRGB(x, y2, Color.RED.getRGB());
                                         this.addFrame(fx, fy, x, y2);

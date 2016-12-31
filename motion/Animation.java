@@ -121,5 +121,9 @@ public class Animation {
     public void reset(){
         currentFrame = 0;
     }
+
+    public int getCurrentSkin() {
+        return currentSkin;
+    }
         
 }

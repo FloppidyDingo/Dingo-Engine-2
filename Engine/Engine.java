@@ -36,7 +36,7 @@ public abstract class Engine {
 
     //<editor-fold defaultstate="collapsed" desc="Engine Variables">
     private static final int MapVersion = 2;
-    private static final String version = "2.0.1";
+    private static final String version = "2.1.1";
     private int fps;
     private List<Extension> extensions;
     private List<KeyMap> keys;
@@ -246,6 +246,9 @@ public abstract class Engine {
         for (Node n : guiNode.getGuiList()) {
             if (n.getControl() != null) {
                 n.getControl().perform(n);
+            }
+            if ("entity".equals(n.getType())) {
+                ((Entity) n).updateAnimation();
             }
         }
         extensions.stream().forEach((extension) -> {
@@ -888,6 +891,13 @@ public abstract class Engine {
      * @param key The key that was released
      */
     public abstract void KeyReleased(String key);
+
+    public void shutdown() {
+        if (media != null) {
+            media.halt();
+        }
+        System.exit(0);
+    }
 
     private class KeyMap {
 

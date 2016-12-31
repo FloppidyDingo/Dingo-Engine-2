@@ -3,6 +3,9 @@
 package Engine;
 
 import java.awt.Color;
+import java.awt.Font;
+import java.awt.FontFormatException;
+import java.awt.GraphicsEnvironment;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
@@ -139,7 +142,13 @@ public class Utils {
         return 0xFF000000 | R | G | B;
     }
     
-    public void reseedRNG(long seed){
+    public static void reseedRNG(long seed){
         r.setSeed(seed);
+    }
+    
+    public static void registerFont(String url) throws FontFormatException, IOException{
+        GraphicsEnvironment ge
+                = GraphicsEnvironment.getLocalGraphicsEnvironment();
+        ge.registerFont(Font.createFont(Font.TRUETYPE_FONT, new File(url)));
     }
 }

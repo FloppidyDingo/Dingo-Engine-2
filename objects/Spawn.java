@@ -87,18 +87,6 @@ public class Spawn extends Node{
         this.count = count;
     }
 
-    public void setX(int x) {
-        this.x = x;
-    }
-
-    public void setY(int y) {
-        this.y = y;
-    }
-
-    public String getType() {
-        return this.type;
-    }
-
     public boolean isVisible() {
         return visible;
     }

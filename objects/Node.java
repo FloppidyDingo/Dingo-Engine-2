@@ -31,6 +31,14 @@ public abstract class Node {
     public int getY() {
         return y;
     }
+
+    public void setX(int x) {
+        this.x = x;
+    }
+
+    public void setY(int y) {
+        this.y = y;
+    }
     
     public boolean intersects(Node n){
         Rectangle r1 = new Rectangle(this.getX() - (this.getWidth() / 2), this.getY() - (this.getHeight() / 2), 

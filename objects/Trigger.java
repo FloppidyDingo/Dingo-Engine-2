@@ -195,22 +195,6 @@ public class Trigger extends Node{
         this.oneshot = oneshot;
     }
 
-    public int getBx() {
-        return x;
-    }
-
-    public void setX(int bx) {
-        this.x = bx;
-    }
-
-    public int getBy() {
-        return y;
-    }
-
-    public void setY(int by) {
-        this.y = by;
-    }
-
     public boolean isVisible() {
         return visible;
     }

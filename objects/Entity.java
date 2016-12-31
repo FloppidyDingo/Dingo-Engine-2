@@ -185,22 +185,6 @@ public class Entity extends Node{
         this.y = y;
         this.ID = ID;
     }
-    
-    /**
-     *Sets the x coordinate of the Entity.
-     * @param d
-     */
-    public void setX(int d){
-        x = d;
-    }
-    
-    /**
-     *Sets the y coordinate of the Entity.
-     * @param d
-     */
-    public void setY(int d){
-        y = d;
-    }
 
     /**
      *

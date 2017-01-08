@@ -25,6 +25,7 @@ public class Label extends Node{
     public Label() {
         this.img = new BufferedImage(1, 1, BufferedImage.TYPE_INT_ARGB);
         font = new GraphicsFont();
+        text = "sampletext";
     }
 
     @Override

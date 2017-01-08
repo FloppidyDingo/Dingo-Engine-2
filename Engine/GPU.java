@@ -5,7 +5,6 @@
  */
 package Engine;
 
-import GUI.GUI;
 import objects.Node;
 import java.awt.AlphaComposite;
 import java.awt.Color;
@@ -28,7 +27,6 @@ import objects.Light;
  */
 public class GPU extends JPanel{
     private Scene scene;
-    private GUI gui;
     private BufferedImage lightMap;
     private BufferedImage frame;
     private BufferedImage overlay;
@@ -43,14 +41,6 @@ public class GPU extends JPanel{
 
     public Scene getScene() {
         return scene;
-    }
-
-    public GUI getGui() {
-        return gui;
-    }
-
-    public void setGui(GUI gui) {
-        this.gui = gui;
     }
     
     //<editor-fold defaultstate="collapsed" desc="Render Methods">
@@ -108,7 +98,7 @@ public class GPU extends JPanel{
                 }
             }
         }
-        for(Node item : gui.getGuiList()){
+        for(Node item : scene.getGUI()){
             BufferedImage temp = item.render(this);
             if (temp != null) {
                 overlayGraphics.drawImage(temp, item.getX() - (temp.getWidth() / 2) + (frame.getWidth() / 2),

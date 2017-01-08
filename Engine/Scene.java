@@ -17,11 +17,13 @@ import objects.Light;
 public class Scene {
     
     private final List<Node> items;
+    private final List<Node> GUI;
     private final List<Light> lights;
     
     public Scene() {
         this.items = new ArrayList<>();
         this.lights = new ArrayList<>();
+        this.GUI = new ArrayList<>();
     }
     
     public void attachChild(Node item){
@@ -46,5 +48,17 @@ public class Scene {
 
     public List<Light> getLights() {
         return lights;
+    }
+    
+    public void attachGUIChild(Node item){
+        GUI.add(item);
+    }
+    
+    public void removeGUIItem(Node item){
+        GUI.remove(item);
+    }
+
+    public List<Node> getGUI() {
+        return GUI;
     }
 }

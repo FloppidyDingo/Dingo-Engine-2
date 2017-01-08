@@ -6,7 +6,6 @@ package Engine;
 
 import Controls.ButtonControl;
 import GUI.Button;
-import GUI.GUI;
 import objects.Node;
 import Media.AdvancedMedia.Audio.DingoSoundDriver;
 import Media.MediaPipeline;
@@ -45,7 +44,7 @@ public abstract class Engine {
     public GPU gpu;
     public JFrame stage;
     public MediaPipeline media;
-    public GUI guiNode;
+    public Scene scene;
 //</editor-fold>
     //<editor-fold defaultstate="collapsed" desc="Physics Variables">
     private List<Entity> entityList;//solid entities
@@ -101,16 +100,18 @@ public abstract class Engine {
 
             @Override
             public void mouseMoved(MouseEvent e) {
-                for (Node node : guiNode.getGuiList()) {
-                    Rectangle r = new Rectangle(node.getX() - (node.getWidth() / 2), node.getY() - (node.getHeight() / 2),
-                            node.getWidth(), node.getHeight());
-                    Point point = new Point((int)(e.getX() * ((float)gpu.getResX() / gpu.getWidth())) - (gpu.getResX() / 2), 
-                        (int)(e.getY() * ((float)gpu.getResY() / gpu.getHeight())) - (gpu.getResY() / 2));
-                    if(node instanceof Button){
-                        if (r.contains(point)) {
-                            ((ButtonControl) node.getControl()).onHover();
-                        }else{
-                            ((ButtonControl) node.getControl()).onIdle();
+                if (scene != null) {
+                    for (Node node : scene.getGUI()) {
+                        Rectangle r = new Rectangle(node.getX() - (node.getWidth() / 2), node.getY() - (node.getHeight() / 2),
+                                node.getWidth(), node.getHeight());
+                        Point point = new Point((int) (e.getX() * ((float) gpu.getResX() / gpu.getWidth())) - (gpu.getResX() / 2),
+                                (int) (e.getY() * ((float) gpu.getResY() / gpu.getHeight())) - (gpu.getResY() / 2));
+                        if (node instanceof Button) {
+                            if (r.contains(point)) {
+                                ((ButtonControl) node.getControl()).onHover();
+                            } else {
+                                ((ButtonControl) node.getControl()).onIdle();
+                            }
                         }
                     }
                 }
@@ -119,14 +120,16 @@ public abstract class Engine {
         gpu.addMouseListener(new MouseListener() {
             @Override
             public void mouseClicked(MouseEvent e) {
-                for (Node node : guiNode.getGuiList()) {
-                    Rectangle r = new Rectangle(node.getX() - (node.getWidth() / 2), node.getY() - (node.getHeight() / 2),
-                            node.getWidth(), node.getHeight());
-                    Point point = new Point((int)(e.getX() * ((float)gpu.getResX() / gpu.getWidth())) - (gpu.getResX() / 2), 
-                        (int)(e.getY() * ((float)gpu.getResY() / gpu.getHeight())) - (gpu.getResY() / 2));
-                    if(r.contains(point)){
-                        if (node instanceof Button) {
-                            ((ButtonControl) node.getControl()).buttonPerform(e);
+                if (scene != null) {
+                    for (Node node : scene.getGUI()) {
+                        Rectangle r = new Rectangle(node.getX() - (node.getWidth() / 2), node.getY() - (node.getHeight() / 2),
+                                node.getWidth(), node.getHeight());
+                        Point point = new Point((int) (e.getX() * ((float) gpu.getResX() / gpu.getWidth())) - (gpu.getResX() / 2),
+                                (int) (e.getY() * ((float) gpu.getResY() / gpu.getHeight())) - (gpu.getResY() / 2));
+                        if (r.contains(point)) {
+                            if (node instanceof Button) {
+                                ((ButtonControl) node.getControl()).buttonPerform(e);
+                            }
                         }
                     }
                 }
@@ -134,14 +137,16 @@ public abstract class Engine {
 
             @Override
             public void mousePressed(MouseEvent e) {
-                for (Node node : guiNode.getGuiList()) {
-                    Rectangle r = new Rectangle(node.getX() - (node.getWidth() / 2), node.getY() - (node.getHeight() / 2),
-                            node.getWidth(), node.getHeight());
-                    Point point = new Point((int)(e.getX() * ((float)gpu.getResX() / gpu.getWidth())) - (gpu.getResX() / 2), 
-                        (int)(e.getY() * ((float)gpu.getResY() / gpu.getHeight())) - (gpu.getResY() / 2));
-                    if(r.contains(point)){
-                        if (node instanceof Button) {
-                            ((ButtonControl) node.getControl()).onPress();
+                if (scene != null) {
+                    for (Node node : scene.getGUI()) {
+                        Rectangle r = new Rectangle(node.getX() - (node.getWidth() / 2), node.getY() - (node.getHeight() / 2),
+                                node.getWidth(), node.getHeight());
+                        Point point = new Point((int) (e.getX() * ((float) gpu.getResX() / gpu.getWidth())) - (gpu.getResX() / 2),
+                                (int) (e.getY() * ((float) gpu.getResY() / gpu.getHeight())) - (gpu.getResY() / 2));
+                        if (r.contains(point)) {
+                            if (node instanceof Button) {
+                                ((ButtonControl) node.getControl()).onPress();
+                            }
                         }
                     }
                 }
@@ -149,14 +154,16 @@ public abstract class Engine {
 
             @Override
             public void mouseReleased(MouseEvent e) {
-                for (Node node : guiNode.getGuiList()) {
-                    Rectangle r = new Rectangle(node.getX() - (node.getWidth() / 2), node.getY() - (node.getHeight() / 2),
-                            node.getWidth(), node.getHeight());
-                    Point point = new Point((int)(e.getX() * ((float)gpu.getResX() / gpu.getWidth())) - (gpu.getResX() / 2), 
-                        (int)(e.getY() * ((float)gpu.getResY() / gpu.getHeight())) - (gpu.getResY() / 2));
-                    if(r.contains(point)){
-                        if (node instanceof Button) {
-                            ((ButtonControl) node.getControl()).onRelease();
+                if (scene != null) {
+                    for (Node node : scene.getGUI()) {
+                        Rectangle r = new Rectangle(node.getX() - (node.getWidth() / 2), node.getY() - (node.getHeight() / 2),
+                                node.getWidth(), node.getHeight());
+                        Point point = new Point((int) (e.getX() * ((float) gpu.getResX() / gpu.getWidth())) - (gpu.getResX() / 2),
+                                (int) (e.getY() * ((float) gpu.getResY() / gpu.getHeight())) - (gpu.getResY() / 2));
+                        if (r.contains(point)) {
+                            if (node instanceof Button) {
+                                ((ButtonControl) node.getControl()).onRelease();
+                            }
                         }
                     }
                 }
@@ -203,8 +210,6 @@ public abstract class Engine {
                 }
             }
         });
-        guiNode = new GUI();
-        gpu.setGui(guiNode);
         stage.addWindowListener(new java.awt.event.WindowAdapter() {
             @Override
             public void windowClosing(java.awt.event.WindowEvent windowEvent) {
@@ -243,7 +248,7 @@ public abstract class Engine {
                 n.getControl().perform(n);
             }
         }
-        for (Node n : guiNode.getGuiList()) {
+        for (Node n : scene.getGUI()) {
             if (n.getControl() != null) {
                 n.getControl().perform(n);
             }
@@ -258,6 +263,25 @@ public abstract class Engine {
         });
         TimeQueue.masterCheck();
         //<editor-fold defaultstate="collapsed" desc="Physics">
+        entityList.clear();
+        triggerList.clear();
+        spawnList.clear();
+        for(Node n : scene.getItems()){
+            switch(n.getType()){
+                case "entity":{
+                    entityList.add((Entity)n);
+                    break;
+                }
+                case "trigger":{
+                    triggerList.add((Trigger)n);
+                    break;
+                }
+                case "spawn":{
+                    spawnList.add((Spawn)n);
+                    break;
+                }
+            }
+        }
         //<editor-fold defaultstate="collapsed" desc="spawner">
         for (Spawn s : spawnList) {
             if (s.getTime() > s.getCount()) {
@@ -829,22 +853,7 @@ public abstract class Engine {
 
     public void setScene(Scene s) {
         gpu.setScene(s);
-        for(Node n : s.getItems()){
-            switch(n.getType()){
-                case "entity":{
-                    entityList.add((Entity)n);
-                    break;
-                }
-                case "trigger":{
-                    triggerList.add((Trigger)n);
-                    break;
-                }
-                case "spawn":{
-                    spawnList.add((Spawn)n);
-                    break;
-                }
-            }
-        }
+        scene = s;
     }
     
     /**

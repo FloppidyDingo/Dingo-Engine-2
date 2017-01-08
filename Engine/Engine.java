@@ -75,10 +75,18 @@ public abstract class Engine {
      * call this to start the engine
      *
      * @param settings
+     * @param args
      */
-    public void start(Settings settings) {
+    public void start(Settings settings, String[] args) {
         //<editor-fold defaultstate="collapsed" desc="init Engine">
         System.setProperty("sun.java2d.opengl", "true");
+        for (String arg : args) {
+            if ("-debug".equals(arg)) {
+                Debugger debug = new Debugger();
+                debug.setVisible(true);
+                System.out.println("Debug Console ready");
+            }
+        }
         fps = settings.getFrameRate();
         this.animtimer = new Timer(1000 / fps) {
             @Override

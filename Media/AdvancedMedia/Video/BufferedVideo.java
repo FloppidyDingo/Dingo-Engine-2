@@ -18,11 +18,7 @@ public class BufferedVideo extends VideoNode{
     
     @Override
     public void update(){
-        for (int iy = 0; iy < image.getWidth(); iy++) {
-            for (int ix = 0; ix < image.getHeight(); ix++) {
-                image.setRGB(ix, iy, input.getData()[(iy * resX) + ix]);
-            }
-        }
+        
     }
 
     public BufferedVideo(GPU gpu, int w, int h) {

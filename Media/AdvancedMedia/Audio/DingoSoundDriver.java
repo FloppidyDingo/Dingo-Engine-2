@@ -5,6 +5,7 @@
  */
 package Media.AdvancedMedia.Audio;
 
+import Media.Codec;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.sound.sampled.AudioFormat;
@@ -21,23 +22,28 @@ public class DingoSoundDriver extends AudioDriver{
     private AudioFormat af;
     private byte[] buf;
     private SourceDataLine line;
+    private int[] temp;
     
     @Override
     public void update(){
-        for (int i = 0; i < buf.length; i++) {
-            buf[i] = 0;
+        int div = 0;
+        for (int i = 0; i < temp.length; i++) {
+            temp[i] = 0;
         }
-        if(input == null){
-            return;
+        for (Codec input : inputs) {
+            div ++;
+            int[] in = input.process();
+            for (int i = 0; i < in.length; i++) {
+                float j = in[i];
+                temp[i] += (int)((float) j * volume);
+            }
         }
-        if(input.getData() == null){
-            return;
+        if (div != 0) {
+            for (int i = 0; i < temp.length; i++) {
+                buf[i] = (byte) (temp[i] / div);
+            }
         }
-        int[] in = input.getData();
-        for (int i = 0; i < in.length; i++) {
-            float j = in[i];
-            buf[i] = (byte)((float)j * volume);
-        }
+        
         line.write(buf, 0, buf.length);
     }
     
@@ -51,14 +57,15 @@ public class DingoSoundDriver extends AudioDriver{
     }
 
     @Override
-    public void init(int SampleRate, int bitDepth, int bufferSize) {
+    public void init(int SampleRate, int bitDepth, int bufferSize, int overhead) {
         this.sampleRate = SampleRate;
         this.volume = 1;
         this.af = new AudioFormat(sampleRate, bitDepth, 2, true, false);///sample rate, bit depth, channels, signed, little endian
         buf = new byte[bufferSize * 2];
+        temp = new int[bufferSize * 2];
         try {
             line = AudioSystem.getSourceDataLine(af);
-            line.open(af, bufferSize * 2);
+            line.open(af, bufferSize * overhead);
             line.start();
         } catch (LineUnavailableException ex) {
             Logger.getLogger(DingoSoundDriver.class.getName()).log(Level.SEVERE, null, ex);

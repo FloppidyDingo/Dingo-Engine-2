@@ -19,7 +19,6 @@ import java.util.logging.Logger;
  */
 public class MediaStream extends Codec{
     private BufferedReader br;
-    private int[] buffer;
     private boolean open;
     
     /**
@@ -30,7 +29,7 @@ public class MediaStream extends Codec{
      */
     public void openStream(File f, int blockSize) throws FileNotFoundException{
         br = new BufferedReader(new FileReader(f));
-        buffer = new int[blockSize];
+        data = new int[blockSize];
         open = true;
     }
     
@@ -43,13 +42,13 @@ public class MediaStream extends Codec{
     }
 
     @Override
-    public void process() {
+    public int[] process() {
         int i2;
-        for (int i = 0; i < buffer.length; i++) {
-            buffer[i] = 0;
+        for (int i = 0; i < data.length; i++) {
+            data[i] = 0;
         }
         if (open) {
-            for (int i = 0; i < buffer.length; i++) {
+            for (int i = 0; i < data.length; i++) {
                 try {
                     i2 = br.read();
                     if (i2 == -1) {
@@ -57,7 +56,7 @@ public class MediaStream extends Codec{
                         open = false;
                         break;
                     } else {
-                        buffer[i] = i2;
+                        data[i] = i2;
                     }
                 } catch (IOException ex) {
                     Logger.getLogger(MediaStream.class.getName()).log(Level.SEVERE, null, ex);
@@ -65,7 +64,7 @@ public class MediaStream extends Codec{
                 }
             }
         }
-        out.setData(buffer);
+        return data;
     }
     
 }

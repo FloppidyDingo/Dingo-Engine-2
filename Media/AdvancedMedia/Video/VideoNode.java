@@ -6,7 +6,6 @@
 package Media.AdvancedMedia.Video;
 
 import objects.Node;
-import Media.Connector;
 
 /**
  *
@@ -15,8 +14,6 @@ import Media.Connector;
 public abstract class VideoNode extends Node{
     public int resX;
     public int resY;
-    
-    public Connector input;
     
     public abstract void update();
     

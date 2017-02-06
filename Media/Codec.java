@@ -5,9 +5,6 @@
  */
 package Media;
 
-import java.util.ArrayList;
-import java.util.List;
-
 
 /**
  *
@@ -15,36 +12,8 @@ import java.util.List;
  */
 public abstract class Codec {
     
-    public Connector out;
-    public List<Connector> in;
-    protected int order;
+    public int[] data;
 
-    public Codec() {
-        this.out = new Connector();
-        this.in = new ArrayList<>();
-    }
-
-    public int getOrder() {
-        return order;
-    }
-
-    public void setOrder(int order) {
-        this.order = order;
-    }
-
-    public Connector getOut() {
-        return out;
-    }
-    
-    public void link(Codec source){
-        in.add(source.out);
-        source.setOrder(order - 1);
-    }
-    
-    public void unlink(Codec source){
-        in.remove(source.getOut());
-    }
-    
-    public abstract void process();
+    public abstract int[] process();
     
 }

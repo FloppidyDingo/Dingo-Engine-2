@@ -6,7 +6,8 @@
 package Media.AdvancedMedia.Audio;
 
 import Media.Codec;
-import Media.Connector;
+import java.util.ArrayList;
+import java.util.List;
 
 
 
@@ -18,13 +19,17 @@ public abstract class AudioDriver {
     protected float volume;
     protected String name;
     protected String version;
-    public Connector input;
+    protected final List<Codec> inputs;
+
+    public AudioDriver() {
+        this.inputs = new ArrayList<>();
+    }
     
     public abstract void update();
     
     public abstract void stop();
     
-    public abstract void init(int SampleRate, int bitDepth, int bufferSize);
+    public abstract void init(int SampleRate, int bitDepth, int bufferSize, int overhead);
     
     public float getVolume() {
         return volume;
@@ -33,13 +38,16 @@ public abstract class AudioDriver {
     public void setVolume(float volume) {
         this.volume = volume;
     }
-
-    public void link(Codec source) {
-        this.input = source.getOut();
+    
+    public void addCodec(Codec c){
+        inputs.add(c);
     }
     
-    public void clearLink(){
-        this.input = null;
+    public void removeCodec(Codec c){
+        inputs.remove(c);
     }
     
+    public void reset(){
+        inputs.clear();
+    }
 }

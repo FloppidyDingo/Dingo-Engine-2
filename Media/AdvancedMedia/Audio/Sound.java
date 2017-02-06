@@ -16,51 +16,50 @@ import java.nio.file.Paths;
  * @author James
  */
 public class Sound extends Codec{
-    private int[] data;
     private int block;
     private int cursor;
     private boolean loop;
     private boolean overflow;
     private boolean playing;
+    private int[] buffer;
+    private float volume;
 
     @Override
-    public void process() {
-        int[] output = new int[block];
+    public int[] process() {
+        data = new int[block];
         if (playing) {
-            out.setUpdated(true);
             for (int i = 0; i < block; i++) {
-                if (cursor > data.length - 1) {
+                if (cursor > buffer.length - 1) {
                     cursor = 0;
                     if (!loop) {
                         overflow = true;
                     }
                 }
                 if (overflow) {
-                    output[i] = 0;
+                    data[i] = 0;
                 } else {
-                    output[i] = data[cursor];
+                    data[i] = buffer[cursor];
                 }
                 cursor ++;
             }
         }else{
-            out.setUpdated(false);
-            for (int i = 0; i < output.length; i++) {
-                output[i] = 0;
+            for (int i = 0; i < data.length; i++) {
+                data[i] = 0;
             }
         }
         if(overflow){
             playing = false;
         }
-        out.setData(output);
+        return data;
     }
     
     public void openFile(String file, int blockSize) throws IOException{
-        block = blockSize;
+        block = blockSize * 2;
         Path path = Paths.get(file);
         byte[] temp = Files.readAllBytes(path);
-        data = new int[(int)Files.size(path)];
+        buffer = new int[(int)Files.size(path)];
         for (int i = 0; i < temp.length; i++) {
-            data[i] = temp[i];
+            buffer[i] = temp[i];
         }
     }
     
@@ -115,6 +114,14 @@ public class Sound extends Codec{
 
     public boolean isPlaying() {
         return playing;
+    }
+
+    public float getVolume() {
+        return volume;
+    }
+
+    public void setVolume(float volume) {
+        this.volume = volume;
     }
     
 }

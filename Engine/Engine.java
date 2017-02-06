@@ -4,6 +4,7 @@
  */
 package Engine;
 
+import Cinematics.Script;
 import Controls.ButtonControl;
 import GUI.Button;
 import objects.Node;
@@ -39,12 +40,16 @@ public abstract class Engine {
     private int fps;
     private List<Extension> extensions;
     private List<KeyMap> keys;
+    private List<Script> scripts;
     private Timer animtimer;
     private int preComputedRate;
     public GPU gpu;
     public JFrame stage;
     public MediaPipeline media;
     public Scene scene;
+    private boolean tractionControl;
+    private int fpsAdj;
+    private int TCThreshold;
 //</editor-fold>
     //<editor-fold defaultstate="collapsed" desc="Physics Variables">
     private List<Entity> entityList;//solid entities
@@ -70,6 +75,7 @@ public abstract class Engine {
     private Entity camTarget;
     private int collisionMode = 3;
 //</editor-fold>
+    private String gameTitle;
 
     /**
      * call this to start the engine
@@ -88,6 +94,7 @@ public abstract class Engine {
             }
         }
         fps = settings.getFrameRate();
+        fpsAdj = fps;
         this.animtimer = new Timer(1000 / fps) {
             @Override
             public void action() {
@@ -97,9 +104,9 @@ public abstract class Engine {
         animtimer.stop();
         extensions = new ArrayList<>();
         keys = new ArrayList<>();
+        gpu = new GPU(settings);
         stage = new JFrame();
         stage.setMinimumSize(new Dimension(settings.getResolutionX(), settings.getResolutionY()));
-        gpu = new GPU(settings);
         gpu.addMouseMotionListener(new MouseMotionListener() {
             @Override
             public void mouseDragged(MouseEvent e) {
@@ -261,7 +268,7 @@ public abstract class Engine {
                 n.getControl().perform(n);
             }
             if ("entity".equals(n.getType())) {
-                ((Entity) n).updateAnimation();
+                ((Entity) n).update();
             }
         }
         extensions.stream().forEach((extension) -> {
@@ -383,24 +390,58 @@ public abstract class Engine {
         }
         for (Node n : gpu.getScene().getItems()) {
             if ("entity".equals(n.getType())) {
-                ((Entity) n).updateAnimation();
+                ((Entity) n).update();
             }
         }
         gpu.draw();
+        if (media != null) {
+            stage.setTitle(gameTitle + " | FPS: " + Integer.toString(animtimer.getFPS()) + " | MMEQ: "
+                    + media.getMediaQueue());
+        }else {
+            stage.setTitle(gameTitle + " | FPS: " + Integer.toString(animtimer.getFPS()));
+        }
+        if(tractionControl & (media != null)){
+            if(media.getMediaQueue() > TCThreshold){
+                fpsAdj --;
+                animtimer.setInterval(1000 / fpsAdj);
+            }else if(fpsAdj != fps){
+                fpsAdj ++;
+                animtimer.setInterval(1000 / fpsAdj);
+            }
+        }
+    }
+
+    public int getTCThreshold() {
+        return TCThreshold;
+    }
+
+    public void setTCThreshold(int TCThreshold) {
+        this.TCThreshold = TCThreshold;
     }
 
     //<editor-fold defaultstate="collapsed" desc="Engine Methods">
-    public void beginMediaSystem(int sampleRate, int bitDepth) {
+    public void beginMediaSystem(int sampleRate, int bitDepth, int overhead) {
         media = new MediaPipeline();
         DingoSoundDriver DSD = new DingoSoundDriver();
-        DSD.init(sampleRate, bitDepth, (sampleRate / fps) * (bitDepth / 8));
+        preComputedRate = (sampleRate / fps) * (bitDepth / 8);
+        DSD.init(sampleRate, bitDepth, preComputedRate, overhead);
+        System.out.println("MME Set to a buffer size of " + sampleRate / fps + " samples per frame");
+        System.out.println("Sample Rate: " + sampleRate);
+        System.out.println("Bit Depth: " + bitDepth);
         media.setAudio(DSD);
         media.start();
-        preComputedRate = sampleRate * (bitDepth / 8);
     }
 
     public int getComputedMediaBufferSize() {
-        return preComputedRate / fps * 2;
+        return preComputedRate;
+    }
+
+    public boolean isTractionControl() {
+        return tractionControl;
+    }
+
+    public void setTractionControl(boolean tractionControl) {
+        this.tractionControl = tractionControl;
     }
 
     /**
@@ -428,6 +469,7 @@ public abstract class Engine {
      */
     public void setFps(int fps) {
         this.fps = fps;
+        fpsAdj = fps;
         animtimer.setInterval(1000 / fps);
     }
 
@@ -473,7 +515,13 @@ public abstract class Engine {
         extensions.remove(ext);
         ext.detach();
     }
-
+    
+    public void clearExtensions(){
+        for (Extension extension : extensions) {
+            extension.detach();
+        }
+        extensions.clear();
+    }
     /**
      * Maps a new key to the internal Key Mapper
      *
@@ -914,6 +962,14 @@ public abstract class Engine {
             media.halt();
         }
         System.exit(0);
+    }
+
+    public String getGameTitle() {
+        return gameTitle;
+    }
+
+    public void setGameTitle(String gameTitle) {
+        this.gameTitle = gameTitle;
     }
 
     private class KeyMap {

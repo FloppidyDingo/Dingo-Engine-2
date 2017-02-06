@@ -21,10 +21,12 @@ public class Label extends Node{
     private BufferedImage img;
     public int offsetX;
     public int offsetY;
+    public int padding;
 
     public Label() {
         this.img = new BufferedImage(1, 1, BufferedImage.TYPE_INT_ARGB);
         font = new GraphicsFont();
+        padding = 1;
         text = "sampletext";
     }
 
@@ -75,7 +77,7 @@ public class Label extends Node{
     public void setText(String label) {
         this.text = label;
         int lines = label.split("\\r?\\n").length;
-        this.img = new BufferedImage(label.length() * (int)(font.getFont().getSize() * font.getScale()) + font.getPaddingW(),
+        this.img = new BufferedImage(label.length() * (int)((font.getFont().getSize() + padding) * font.getScale()) + font.getPaddingW(),
                lines * font.getFont().getSize() + font.getPaddingH(), BufferedImage.TYPE_INT_ARGB);
     }
 
@@ -93,6 +95,14 @@ public class Label extends Node{
 
     public void setOffsetY(int offsetY) {
         this.offsetY = offsetY;
+    }
+
+    public void setPadding(int padding) {
+        this.padding = padding;
+    }
+
+    public int getPadding() {
+        return padding;
     }
     
 }

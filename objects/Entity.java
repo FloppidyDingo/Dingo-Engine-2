@@ -218,7 +218,7 @@ public class Entity extends Node{
         ani.remove(e);
     }
 
-    public void updateAnimation(){
+    public void update(){
         for (Animation animation : ani) {
             int a = animation.nextFrame();
             if(a != -1){
@@ -256,4 +256,8 @@ public class Entity extends Node{
         return bound;
     }
     
+    @Override
+    public String toString(){
+        return ID;
+    }
 }

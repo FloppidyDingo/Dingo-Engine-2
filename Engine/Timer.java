@@ -16,6 +16,9 @@ import java.awt.event.ActionListener;
  */
 public abstract class Timer {
     private final javax.swing.Timer t;
+    private final javax.swing.Timer fpscounter;
+    private int FPS;
+    private int count;
     
     /**
      *
@@ -25,16 +28,21 @@ public abstract class Timer {
         t = new javax.swing.Timer(interval, new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent ae) {
-                java.awt.EventQueue.invokeLater(new Runnable() {
-                    @Override
-                    public void run() {
-                        action();
-                    }
-                });
+                action();
+                count ++;
             }
         });
         t.stop();
         t.setCoalesce(false);
+        fpscounter = new javax.swing.Timer(1000, new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                FPS = count;
+                count = 0;
+            }
+        });
+        fpscounter.start();
+        fpscounter.setCoalesce(false);
     }
     
     /**
@@ -57,6 +65,10 @@ public abstract class Timer {
      */
     public void stop(){
         t.stop();
+    }
+
+    public int getFPS() {
+        return FPS;
     }
     
     /**

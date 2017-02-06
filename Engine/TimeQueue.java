@@ -13,6 +13,7 @@ import java.util.List;
  *
  * @author Jaca
  */
+@Deprecated
 public abstract class TimeQueue {
 
     private final List<Trigger> list;

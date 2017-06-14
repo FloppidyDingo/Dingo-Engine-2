@@ -3,7 +3,7 @@
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
-package Engine;
+package Cinematics;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -83,7 +83,7 @@ public abstract class TimeQueue {
         time = 0;
     }
 
-    protected static void masterCheck() {
+    public static void masterCheck() {
         for (TimeQueue timeQueue : masterList) {
             timeQueue.check();
         }

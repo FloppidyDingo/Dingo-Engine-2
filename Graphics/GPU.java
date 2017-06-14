@@ -3,8 +3,11 @@
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
-package Engine;
+package Graphics;
 
+import Engine.Engine;
+import Engine.Scene;
+import Engine.Settings;
 import objects.Node;
 import java.awt.AlphaComposite;
 import java.awt.Color;
@@ -19,7 +22,6 @@ import java.awt.image.BufferedImage;
 import java.util.Comparator;
 import javax.swing.JFrame;
 import javax.swing.JPanel;
-import objects.Light;
 
 /**
  *
@@ -34,8 +36,9 @@ public class GPU extends JPanel{
     private final int color;
     private boolean fullScreen;
     private BufferStrategy FB;
+    private Engine engine;
 
-    protected void setScene(Scene s) {
+    public void setScene(Scene s) {
         scene = s;
     }
 
@@ -56,17 +59,23 @@ public class GPU extends JPanel{
         overlayGraphics.setComposite(AlphaComposite.getInstance(AlphaComposite.CLEAR, 1));
         overlayGraphics.fillRect(0, 0, overlay.getWidth(), overlay.getHeight());
         overlayGraphics.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 1));
+        //<editor-fold defaultstate="collapsed" desc="scene">
         for(Node item : scene.getItems()){
-            BufferedImage temp = item.render(this);
-            if (temp != null) {
-                frameBuffer.drawImage(temp, item.getX() - (temp.getWidth() / 2) + (frame.getWidth() / 2),
-                        item.getY() - (temp.getHeight() / 2) + (frame.getHeight() / 2), null);
+            if (item.isVisible()) {
+                BufferedImage temp = item.render(this);
+                if (temp != null) {
+                    frameBuffer.drawImage(temp, item.getX() - (temp.getWidth() / 2) + (frame.getWidth() / 2),
+                            item.getY() - (temp.getHeight() / 2) + (frame.getHeight() / 2), null);
+                }
             }
         }
+        //</editor-fold>
+        //<editor-fold defaultstate="collapsed" desc="Lights">
         scene.getLights().sort(Comparator.comparing(Light::getBrightness));
-        for(Light light : scene.getLights()){
-            switch (light.getType()) {
-                case 0: {
+        for(Light lTemp : scene.getLights()){
+            switch (lTemp.getType()) {
+                case Circle: {
+                    CircleLight light = (CircleLight)lTemp;
                     lightGraphics.setComposite(AlphaComposite.getInstance(AlphaComposite.CLEAR, 1));
                     lightGraphics.fillOval(light.getX() - (light.getRadius()) + (frame.getWidth() / 2),
                             light.getY() - (light.getRadius()) + (frame.getHeight() / 2), light.getRadius() * 2, light.getRadius() * 2);
@@ -76,7 +85,8 @@ public class GPU extends JPanel{
                             light.getY() - (light.getRadius()) + (frame.getHeight() / 2), light.getRadius() * 2, light.getRadius() * 2);
                     break;
                 }
-                case 1:{
+                case Rectangle:{
+                    RectangleLight light = (RectangleLight)lTemp;
                     lightGraphics.setComposite(AlphaComposite.getInstance(AlphaComposite.CLEAR, 1));
                     lightGraphics.fillRect(light.getX() - (light.getWidth() / 2) + (frame.getWidth() / 2),
                             light.getY() - (light.getHeight() / 2) + (frame.getHeight() / 2), light.getWidth(), light.getHeight());
@@ -86,7 +96,8 @@ public class GPU extends JPanel{
                             light.getY() - (light.getHeight() / 2) + (frame.getHeight() / 2), light.getWidth(), light.getHeight());
                     break;
                 }
-                case 2:{
+                case Box:{
+                    BoxLight light = (BoxLight)lTemp;
                     lightGraphics.setComposite(AlphaComposite.getInstance(AlphaComposite.CLEAR, 1));
                     lightGraphics.fillRect(light.getX() - (light.getWidth() / 2) + (frame.getWidth() / 2),
                             light.getY() - (light.getWidth() / 2) + (frame.getHeight() / 2), light.getWidth(), light.getWidth());
@@ -98,13 +109,18 @@ public class GPU extends JPanel{
                 }
             }
         }
+        //</editor-fold>
+        //<editor-fold defaultstate="collapsed" desc="GUI">
         for(Node item : scene.getGUI()){
-            BufferedImage temp = item.render(this);
-            if (temp != null) {
-                overlayGraphics.drawImage(temp, item.getX() - (temp.getWidth() / 2) + (frame.getWidth() / 2),
-                        item.getY() - (temp.getHeight() / 2) + (frame.getHeight() / 2), null);
+            if (item.isVisible()) {
+                BufferedImage temp = item.render(this);
+                if (temp != null) {
+                    overlayGraphics.drawImage(temp, item.getX() - (temp.getWidth() / 2) + (frame.getWidth() / 2),
+                            item.getY() - (temp.getHeight() / 2) + (frame.getHeight() / 2), null);
+                }
             }
         }
+        //</editor-fold>
         frameBuffer.dispose();
         lightGraphics.dispose();
         overlayGraphics.dispose();
@@ -144,12 +160,13 @@ public class GPU extends JPanel{
     }
 //</editor-fold>
     
-    public GPU(Settings s) {
+    public GPU(Settings s, Engine engine) {
         frame = new BufferedImage(s.getInternalResX(), s.getInternalResY(), s.getColorModel());
         lightMap = new BufferedImage(s.getInternalResX(), s.getInternalResY(), s.getColorModel());
         overlay = new BufferedImage(s.getInternalResX(), s.getInternalResY(), s.getColorModel());
         buffer = new BufferedImage(s.getInternalResX(), s.getInternalResY(), s.getColorModel());
         color = s.getColorModel();
+        this.engine = engine;
     }
     
     public void setInternalResolution(int resx, int resy){

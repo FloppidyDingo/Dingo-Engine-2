@@ -6,7 +6,7 @@
 package objects;
 
 import Controls.Control;
-import Engine.GPU;
+import Graphics.GPU;
 import java.awt.Rectangle;
 import java.awt.image.BufferedImage;
 
@@ -15,10 +15,13 @@ import java.awt.image.BufferedImage;
  * @author James
  */
 public abstract class Node {
-    public String type;
-    public int x;
-    public int y;
+    protected String type;
+    protected int x;
+    protected int y;
     private Control control;
+    protected int collisionLayer;
+    private boolean visible = true;
+    private String ID;
     
     public String getType() {
         return type;
@@ -54,6 +57,30 @@ public abstract class Node {
 
     public void setControl(Control control) {
         this.control = control;
+    }
+
+    public int getCollisionLayer() {
+        return collisionLayer;
+    }
+
+    public void setCollisionLayer(int collisionLayer) {
+        this.collisionLayer = collisionLayer;
+    }
+
+    public boolean isVisible() {
+        return visible;
+    }
+
+    public void setVisible(boolean visible) {
+        this.visible = visible;
+    }
+
+    public String getID() {
+        return ID;
+    }
+
+    public void setID(String ID) {
+        this.ID = ID;
     }
     
     public abstract BufferedImage render(GPU gpu);

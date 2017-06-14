@@ -4,7 +4,7 @@
  */
 package objects;
 
-import Engine.GPU;
+import Graphics.GPU;
 import java.awt.Color;
 import java.awt.image.BufferedImage;
 

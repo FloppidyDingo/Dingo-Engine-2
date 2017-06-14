@@ -6,7 +6,7 @@
 
 package objects;
 
-import Engine.GPU;
+import Graphics.GPU;
 import java.awt.Rectangle;
 import java.awt.image.BufferedImage;
 import java.util.ArrayList;

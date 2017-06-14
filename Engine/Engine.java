@@ -4,8 +4,12 @@
  */
 package Engine;
 
-import Cinematics.Script;
+import Cinematics.TimeQueue;
+import Graphics.GPU;
 import Controls.ButtonControl;
+import Controls.Listeners.GameEventListener;
+import Controls.Listeners.GameKeyListener;
+import Controls.Listeners.GameMouseListener;
 import GUI.Button;
 import objects.Node;
 import Media.AdvancedMedia.Audio.DingoSoundDriver;
@@ -36,11 +40,11 @@ public abstract class Engine {
 
     //<editor-fold defaultstate="collapsed" desc="Engine Variables">
     private static final int MapVersion = 2;
-    private static final String version = "2.1.1";
+    private static final String version = "2.2.0";
     private int fps;
     private List<Extension> extensions;
     private List<KeyMap> keys;
-    private List<Script> scripts;
+    private List<GameEventListener> listeners;
     private Timer animtimer;
     private int preComputedRate;
     public GPU gpu;
@@ -50,6 +54,10 @@ public abstract class Engine {
     private boolean tractionControl;
     private int fpsAdj;
     private int TCThreshold;
+    private String gameTitle;
+    private Point mousePoint;
+    private Point prevMousePoint;
+    private Vector mouseVelocity;
 //</editor-fold>
     //<editor-fold defaultstate="collapsed" desc="Physics Variables">
     private List<Entity> entityList;//solid entities
@@ -75,7 +83,6 @@ public abstract class Engine {
     private Entity camTarget;
     private int collisionMode = 3;
 //</editor-fold>
-    private String gameTitle;
 
     /**
      * call this to start the engine
@@ -85,7 +92,9 @@ public abstract class Engine {
      */
     public void start(Settings settings, String[] args) {
         //<editor-fold defaultstate="collapsed" desc="init Engine">
-        System.setProperty("sun.java2d.opengl", "true");
+        if (settings.isGPUAcceleration()) {
+            System.setProperty("sun.java2d.opengl", "true");
+        }
         for (String arg : args) {
             if ("-debug".equals(arg)) {
                 Debugger debug = new Debugger();
@@ -103,10 +112,14 @@ public abstract class Engine {
         };
         animtimer.stop();
         extensions = new ArrayList<>();
+        listeners = new ArrayList<>();
         keys = new ArrayList<>();
-        gpu = new GPU(settings);
+        gpu = new GPU(settings, this);
         stage = new JFrame();
         stage.setMinimumSize(new Dimension(settings.getResolutionX(), settings.getResolutionY()));
+        mousePoint = new Point(0, 0);
+        prevMousePoint = new Point(0, 0);
+        mouseVelocity = new Vector();
         gpu.addMouseMotionListener(new MouseMotionListener() {
             @Override
             public void mouseDragged(MouseEvent e) {
@@ -116,13 +129,20 @@ public abstract class Engine {
             @Override
             public void mouseMoved(MouseEvent e) {
                 if (scene != null) {
+                    for (GameEventListener el : listeners) {
+                        if(el instanceof GameMouseListener){
+                            ((GameMouseListener)el).mouseAnalogEvent(e, mouseVelocity, new Point((int) (e.getX() * 
+                                    ((float) gpu.getResX() / gpu.getWidth())) - (gpu.getResX() / 2), (int) (e.getY() * 
+                                    ((float) gpu.getResY() / gpu.getHeight())) - (gpu.getResY() / 2)));
+                        }
+                    }
                     for (Node node : scene.getGUI()) {
                         Rectangle r = new Rectangle(node.getX() - (node.getWidth() / 2), node.getY() - (node.getHeight() / 2),
                                 node.getWidth(), node.getHeight());
-                        Point point = new Point((int) (e.getX() * ((float) gpu.getResX() / gpu.getWidth())) - (gpu.getResX() / 2),
+                        mousePoint.setLocation((int) (e.getX() * ((float) gpu.getResX() / gpu.getWidth())) - (gpu.getResX() / 2),
                                 (int) (e.getY() * ((float) gpu.getResY() / gpu.getHeight())) - (gpu.getResY() / 2));
                         if (node instanceof Button) {
-                            if (r.contains(point)) {
+                            if (r.contains(mousePoint)) {
                                 ((ButtonControl) node.getControl()).onHover();
                             } else {
                                 ((ButtonControl) node.getControl()).onIdle();
@@ -136,12 +156,19 @@ public abstract class Engine {
             @Override
             public void mouseClicked(MouseEvent e) {
                 if (scene != null) {
+                    for (GameEventListener el : listeners) {
+                        if(el instanceof GameMouseListener){
+                            ((GameMouseListener)el).mouseClick(e, new Point((int) (e.getX() * 
+                                    ((float) gpu.getResX() / gpu.getWidth())) - (gpu.getResX() / 2), (int) (e.getY() * 
+                                    ((float) gpu.getResY() / gpu.getHeight())) - (gpu.getResY() / 2)));
+                        }
+                    }
                     for (Node node : scene.getGUI()) {
                         Rectangle r = new Rectangle(node.getX() - (node.getWidth() / 2), node.getY() - (node.getHeight() / 2),
                                 node.getWidth(), node.getHeight());
-                        Point point = new Point((int) (e.getX() * ((float) gpu.getResX() / gpu.getWidth())) - (gpu.getResX() / 2),
+                        mousePoint.setLocation((int) (e.getX() * ((float) gpu.getResX() / gpu.getWidth())) - (gpu.getResX() / 2),
                                 (int) (e.getY() * ((float) gpu.getResY() / gpu.getHeight())) - (gpu.getResY() / 2));
-                        if (r.contains(point)) {
+                        if (r.contains(mousePoint)) {
                             if (node instanceof Button) {
                                 ((ButtonControl) node.getControl()).buttonPerform(e);
                             }
@@ -153,12 +180,19 @@ public abstract class Engine {
             @Override
             public void mousePressed(MouseEvent e) {
                 if (scene != null) {
+                    for (GameEventListener el : listeners) {
+                        if(el instanceof GameMouseListener){
+                            ((GameMouseListener)el).mousePressed(e, new Point((int) (e.getX() * 
+                                    ((float) gpu.getResX() / gpu.getWidth())) - (gpu.getResX() / 2), (int) (e.getY() * 
+                                    ((float) gpu.getResY() / gpu.getHeight())) - (gpu.getResY() / 2)));
+                        }
+                    }
                     for (Node node : scene.getGUI()) {
                         Rectangle r = new Rectangle(node.getX() - (node.getWidth() / 2), node.getY() - (node.getHeight() / 2),
                                 node.getWidth(), node.getHeight());
-                        Point point = new Point((int) (e.getX() * ((float) gpu.getResX() / gpu.getWidth())) - (gpu.getResX() / 2),
+                        mousePoint.setLocation((int) (e.getX() * ((float) gpu.getResX() / gpu.getWidth())) - (gpu.getResX() / 2),
                                 (int) (e.getY() * ((float) gpu.getResY() / gpu.getHeight())) - (gpu.getResY() / 2));
-                        if (r.contains(point)) {
+                        if (r.contains(mousePoint)) {
                             if (node instanceof Button) {
                                 ((ButtonControl) node.getControl()).onPress();
                             }
@@ -169,13 +203,21 @@ public abstract class Engine {
 
             @Override
             public void mouseReleased(MouseEvent e) {
+                
                 if (scene != null) {
+                    for (GameEventListener el : listeners) {
+                        if(el instanceof GameMouseListener){
+                            ((GameMouseListener)el).mouseReleased(e, new Point((int) (e.getX() * 
+                                    ((float) gpu.getResX() / gpu.getWidth())) - (gpu.getResX() / 2), (int) (e.getY() * 
+                                    ((float) gpu.getResY() / gpu.getHeight())) - (gpu.getResY() / 2)));
+                        }
+                    }
                     for (Node node : scene.getGUI()) {
                         Rectangle r = new Rectangle(node.getX() - (node.getWidth() / 2), node.getY() - (node.getHeight() / 2),
                                 node.getWidth(), node.getHeight());
-                        Point point = new Point((int) (e.getX() * ((float) gpu.getResX() / gpu.getWidth())) - (gpu.getResX() / 2),
+                        mousePoint.setLocation((int) (e.getX() * ((float) gpu.getResX() / gpu.getWidth())) - (gpu.getResX() / 2),
                                 (int) (e.getY() * ((float) gpu.getResY() / gpu.getHeight())) - (gpu.getResY() / 2));
-                        if (r.contains(point)) {
+                        if (r.contains(mousePoint)) {
                             if (node instanceof Button) {
                                 ((ButtonControl) node.getControl()).onRelease();
                             }
@@ -203,6 +245,11 @@ public abstract class Engine {
 
             @Override
             public void keyPressed(KeyEvent e) {
+                for (GameEventListener el : listeners) {
+                    if (el instanceof GameKeyListener) {
+                        ((GameKeyListener) el).keyPressed(e, e.getKeyCode());
+                    }
+                }
                 for (KeyMap key : keys) {
                     if (e.getKeyCode() == key.getCode()) {
                         KeyPressed(key.getKey());
@@ -215,6 +262,11 @@ public abstract class Engine {
 
             @Override
             public void keyReleased(KeyEvent e) {
+                for (GameEventListener el : listeners) {
+                    if (el instanceof GameKeyListener) {
+                        ((GameKeyListener) el).keyReleased(e, e.getKeyCode());
+                    }
+                }
                 for (KeyMap key : keys) {
                     if (e.getKeyCode() == key.getCode()) {
                         KeyReleased(key.getKey());
@@ -258,6 +310,8 @@ public abstract class Engine {
 
     private void frame2() {
         frame();
+        mouseVelocity.setDirection(mousePoint.x - prevMousePoint.x, mousePoint.y - prevMousePoint.y);
+        prevMousePoint.setLocation(mousePoint);
         for (Node n : entityList) {
             if (n.getControl() != null) {
                 n.getControl().perform(n);
@@ -318,7 +372,7 @@ public abstract class Engine {
         //<editor-fold defaultstate="collapsed" desc="Collisions (triggers, doors, solid entities">
         for (Entity e : entityList) {
             for (Entity e2 : entityList) {
-                if ((!e.getID().equals(e2.getID()))) {
+                if ((!e.getID().equals(e2.getID())) & (e.getCollisionLayer() == e2.getCollisionLayer())) {
                     //collision between e and e2
                     if ((!e.getID().equals(e2.getID()))) {
                         CollisionBlock cb = predictCollision(e, e2);
@@ -409,6 +463,7 @@ public abstract class Engine {
                 animtimer.setInterval(1000 / fpsAdj);
             }
         }
+        scene.updateLists();
     }
 
     public int getTCThreshold() {
@@ -420,7 +475,12 @@ public abstract class Engine {
     }
 
     //<editor-fold defaultstate="collapsed" desc="Engine Methods">
-    public void beginMediaSystem(int sampleRate, int bitDepth, int overhead) {
+
+    public Point getMousePoint() {
+        return mousePoint;
+    }
+    
+    public void beginMediaSystem(int sampleRate, int bitDepth, int overhead, int latency) {
         media = new MediaPipeline();
         DingoSoundDriver DSD = new DingoSoundDriver();
         preComputedRate = (sampleRate / fps) * (bitDepth / 8);
@@ -429,6 +489,7 @@ public abstract class Engine {
         System.out.println("Sample Rate: " + sampleRate);
         System.out.println("Bit Depth: " + bitDepth);
         media.setAudio(DSD);
+        media.setLatency(latency);
         media.start();
     }
 
@@ -560,6 +621,18 @@ public abstract class Engine {
                 size = keys.size();
             }
         }
+    }
+    
+    public void addListener(GameEventListener e){
+        listeners.add(e);
+    }
+    
+    public void removeListener(GameEventListener e){
+        listeners.remove(e);
+    }
+    
+    public void clearListeners(){
+        listeners.clear();
     }
 //</editor-fold>
 
@@ -923,12 +996,12 @@ public abstract class Engine {
      * @param spawn the corresponding spawner
      * @param e the entity object generated by the spawner
      */
-    public abstract void onSpawning(Spawn spawn, Entity e);
+    public void onSpawning(Spawn spawn, Entity e){}
 
     /**
      * called every time the physics engine finishes processing.
      */
-    public abstract void postPhysicsTick();
+    public void postPhysicsTick(){}
 
     /**
      * called whenever a collision is detected.
@@ -936,7 +1009,7 @@ public abstract class Engine {
      * @param e1
      * @param e2
      */
-    public abstract void onCollision(Entity e1, Entity e2);
+    public void onCollision(Entity e1, Entity e2){}
 
     /**
      * called in your main class. put all of your startup code in here
@@ -948,14 +1021,14 @@ public abstract class Engine {
      *
      * @param key The key that was pressed
      */
-    public abstract void KeyPressed(String key);
+    public void KeyPressed(String key){}
 
     /**
      * Called when the internal KeyMapper detects a key release
      *
      * @param key The key that was released
      */
-    public abstract void KeyReleased(String key);
+    public void KeyReleased(String key){}
 
     public void shutdown() {
         if (media != null) {

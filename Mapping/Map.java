@@ -9,7 +9,8 @@ import java.util.ArrayList;
 import java.util.List;
 import motion.Animation;
 import objects.Entity;
-import objects.Light;
+import Graphics.Light;
+import objects.Node;
 import objects.Skin;
 import objects.Spawn;
 import objects.Trigger;
@@ -19,7 +20,7 @@ import objects.Trigger;
  * @author James
  */
 public class Map {
-    private List<Entity> entityList;//entities
+    private List<Node> entityList;//entities
     private List<Trigger> triggerList;//activate when intersecting targets
     private List<Spawn> spawnList;//spawn point for entities
     private List<Skin> skinList;//skins for entities
@@ -49,10 +50,11 @@ public class Map {
         this.spawnList = new ArrayList<>();
         this.skinList = new ArrayList<>();
         this.animationList = new ArrayList<>();
+        this.lightList = new ArrayList<>();
     }
     
-    public Entity getEntity(String ID){
-        for (Entity col : entityList) {
+    public Node getEntity(String ID){
+        for (Node col : entityList) {
             if (col.getID().equals(ID)) {
                 return col;
             }
@@ -113,11 +115,11 @@ public class Map {
         return scene;
     }
     
-    public List<Entity> getEntityList() {
+    public List<Node> getEntityList() {
         return entityList;
     }
 
-    public void setEntityList(List<Entity> entityList) {
+    public void setEntityList(List<Node> entityList) {
         this.entityList = entityList;
     }
 
@@ -151,7 +153,7 @@ public class Map {
      */
     public Scene compileScene(){
         scene = new Scene();
-        for (Entity e : entityList) {
+        for (Node e : entityList) {
             scene.attachChild(e);
         }
         for (Spawn e : spawnList) {
@@ -164,5 +166,18 @@ public class Map {
             scene.attachLight(l);
         }
         return scene;
+    }
+    
+    public void deconstructScene(Scene s){
+        resetMap();
+        entityList.addAll(s.getItems());
+        lightList.addAll(s.getLights());
+    }
+    
+    public void resetMap(){
+        entityList.clear();
+        spawnList.clear();
+        triggerList.clear();
+        lightList.clear();
     }
 }

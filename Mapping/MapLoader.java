@@ -15,6 +15,9 @@ import javax.xml.parsers.SAXParserFactory;
 import Engine.Engine;
 import Engine.InvalidVersionException;
 import Engine.Utils;
+import Graphics.BoxLight;
+import Graphics.CircleLight;
+import Graphics.RectangleLight;
 import motion.Animation;
 import objects.Entity;
 import objects.Skin;
@@ -34,19 +37,20 @@ public class MapLoader {
      *
      * Creates a Map object using the specified map data file.
      *
-     * @param url The filename of the map
-     * @param referenceURL Specifies the map folder
-     * @param imageURL Specifies the images folder
+     * @param name The filename of the map
+     * @param mapFolder Specifies the map folder (with the last /)
+     * @param imageFolder Specifies the images folder (with the last /)
      * @return The generated Map object
      * @throws Engine.InvalidVersionException
      */
-    public Map generateMap(String url, String referenceURL, String imageURL) throws InvalidVersionException {
+    public Map generateMap(String name, String mapFolder, String imageFolder) throws InvalidVersionException {
         Map map = new Map();
         try {
             SAXParserFactory factory = SAXParserFactory.newInstance();
             SAXParser saxParser = factory.newSAXParser();
             SAXHandler handler = new SAXHandler();
-            saxParser.parse(url, handler);
+            handler.setImageURL(imageFolder);
+            saxParser.parse(mapFolder + name, handler);
             if(handler.getVersion() > Engine.getMapVersion()){
                 throw new InvalidVersionException("Map designed for newer version of the Dingo Engine.");
             }
@@ -97,7 +101,42 @@ public class MapLoader {
                     break;
                 }
                 case "light": {
-                    
+                    switch(attributes.getValue("type")){
+                        case "box":{
+                            BoxLight light = new BoxLight();
+                            light.setBrightness(Float.parseFloat(attributes.getValue("brightness")));
+                            light.setColor(Integer.parseInt(attributes.getValue("color")));
+                            light.setID(attributes.getValue("id"));
+                            light.setWidth(Integer.parseInt(attributes.getValue("width")));
+                            light.setX(Integer.parseInt(attributes.getValue("x")));
+                            light.setY(Integer.parseInt(attributes.getValue("y")));
+                            map.getLightList().add(light);
+                            break;
+                        }
+                        case "rectangle":{
+                            RectangleLight light = new RectangleLight();
+                            light.setBrightness(Float.parseFloat(attributes.getValue("brightness")));
+                            light.setColor(Integer.parseInt(attributes.getValue("color")));
+                            light.setID(attributes.getValue("id"));
+                            light.setWidth(Integer.parseInt(attributes.getValue("width")));
+                            light.setHeight(Integer.parseInt(attributes.getValue("height")));
+                            light.setX(Integer.parseInt(attributes.getValue("x")));
+                            light.setY(Integer.parseInt(attributes.getValue("y")));
+                            map.getLightList().add(light);
+                            break;
+                        }
+                        case "circle":{
+                            CircleLight light = new CircleLight();
+                            light.setBrightness(Float.parseFloat(attributes.getValue("brightness")));
+                            light.setColor(Integer.parseInt(attributes.getValue("color")));
+                            light.setID(attributes.getValue("id"));
+                            light.setRadius(Integer.parseInt(attributes.getValue("radius")));
+                            light.setX(Integer.parseInt(attributes.getValue("x")));
+                            light.setY(Integer.parseInt(attributes.getValue("y")));
+                            map.getLightList().add(light);
+                            break;
+                        }
+                    }
                     break;
                 }
                 case "trigger": {
@@ -141,7 +180,7 @@ public class MapLoader {
                         skinField.setBaseImage(Utils.generateImage(imageURL + attributes.getValue("url")));
                         String def = attributes.getValue("definition");
                         if(def != null){
-                            skinField.bufferSkinDef(imageURL + attributes.getValue("definition"));
+                            skinField.bufferSkinDef(imageURL + def);
                         }
                         element = "skin";
                         break;

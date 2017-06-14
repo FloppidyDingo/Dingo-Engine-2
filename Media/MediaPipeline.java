@@ -8,6 +8,8 @@ package Media;
 import Media.AdvancedMedia.Audio.AudioDriver;
 import Media.AdvancedMedia.Audio.Sound;
 import Media.AdvancedMedia.Video.VideoNode;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /**
  *
@@ -18,6 +20,7 @@ public class MediaPipeline extends Thread{
     private VideoNode video;
     private volatile boolean running;
     private volatile int req;
+    private long latency;
     
     @Override
     public void run(){
@@ -31,10 +34,23 @@ public class MediaPipeline extends Thread{
                 if (video != null) {
                     video.update();
                 }
-                req --;
+                req--;
+            }
+            try {
+                Thread.sleep(latency);
+            } catch (InterruptedException ex) {
+                Logger.getLogger(MediaPipeline.class.getName()).log(Level.SEVERE, null, ex);
             }
         }
         System.out.println("MME Stopped");
+    }
+
+    public synchronized long getLatency() {
+        return latency;
+    }
+
+    public synchronized void setLatency(long latency) {
+        this.latency = latency;
     }
     
     public synchronized void process(){

@@ -6,7 +6,7 @@
 package GUI;
 
 import Controls.BaseButtonControl;
-import Engine.GPU;
+import Graphics.GPU;
 import java.awt.AlphaComposite;
 import java.awt.Graphics2D;
 import java.awt.image.BufferedImage;

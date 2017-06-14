@@ -5,7 +5,7 @@
  */
 package Media.AdvancedMedia.Video;
 
-import Engine.GPU;
+import Graphics.GPU;
 import java.awt.image.BufferedImage;
 
 

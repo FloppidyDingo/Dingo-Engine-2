@@ -38,11 +38,14 @@ import objects.Trigger;
  */
 public abstract class Engine {
 
+    public static final int MAPVERSION = 3;
+    public static final String VERSION = "2.3.8";
     //<editor-fold defaultstate="collapsed" desc="Engine Variables">
-    private static final int MapVersion = 2;
-    private static final String version = "2.2.0";
+
     private int fps;
     private List<Extension> extensions;
+    private List<Extension> extensionRemoval;
+    private List<Extension> extensionAdd;
     private List<KeyMap> keys;
     private List<GameEventListener> listeners;
     private Timer animtimer;
@@ -58,6 +61,7 @@ public abstract class Engine {
     private Point mousePoint;
     private Point prevMousePoint;
     private Vector mouseVelocity;
+    public String[] input;
 //</editor-fold>
     //<editor-fold defaultstate="collapsed" desc="Physics Variables">
     private List<Entity> entityList;//solid entities
@@ -92,16 +96,25 @@ public abstract class Engine {
      */
     public void start(Settings settings, String[] args) {
         //<editor-fold defaultstate="collapsed" desc="init Engine">
-        if (settings.isGPUAcceleration()) {
-            System.setProperty("sun.java2d.opengl", "true");
-        }
         for (String arg : args) {
+            System.out.println(arg);
             if ("-debug".equals(arg)) {
                 Debugger debug = new Debugger();
                 debug.setVisible(true);
                 System.out.println("Debug Console ready");
+                settings.setGPUAcceleration(false);
             }
         }
+        if(settings.isDebugMode()){
+            Debugger debug = new Debugger();
+            debug.setVisible(true);
+            System.out.println("Debug Console ready");
+            settings.setGPUAcceleration(false);
+        }
+        if (settings.isGPUAcceleration()) {
+            System.setProperty("sun.java2d.opengl", "true");
+        }
+        input = args;
         fps = settings.getFrameRate();
         fpsAdj = fps;
         this.animtimer = new Timer(1000 / fps) {
@@ -112,6 +125,8 @@ public abstract class Engine {
         };
         animtimer.stop();
         extensions = new ArrayList<>();
+        extensionRemoval = new ArrayList<>();
+        extensionAdd = new ArrayList<>();
         listeners = new ArrayList<>();
         keys = new ArrayList<>();
         gpu = new GPU(settings, this);
@@ -123,17 +138,25 @@ public abstract class Engine {
         gpu.addMouseMotionListener(new MouseMotionListener() {
             @Override
             public void mouseDragged(MouseEvent e) {
-                
             }
 
             @Override
             public void mouseMoved(MouseEvent e) {
                 if (scene != null) {
                     for (GameEventListener el : listeners) {
-                        if(el instanceof GameMouseListener){
-                            ((GameMouseListener)el).mouseAnalogEvent(e, mouseVelocity, new Point((int) (e.getX() * 
-                                    ((float) gpu.getResX() / gpu.getWidth())) - (gpu.getResX() / 2), (int) (e.getY() * 
-                                    ((float) gpu.getResY() / gpu.getHeight())) - (gpu.getResY() / 2)));
+                        if (el instanceof GameMouseListener) {
+                            ((GameMouseListener) el).mouseAnalogEvent(e, mouseVelocity, new Point((int) (e.getX()
+                                    * ((float) gpu.getResX() / gpu.getWidth())) - (gpu.getResX() / 2), (int) (e.getY()
+                                    * ((float) gpu.getResY() / gpu.getHeight())) - (gpu.getResY() / 2)));
+                        }
+                    }
+                    for (Extension extension : extensions) {
+                        for (GameEventListener el : extension.getListeners()) {
+                            if (el instanceof GameMouseListener) {
+                                ((GameMouseListener) el).mouseAnalogEvent(e, mouseVelocity, new Point((int) (e.getX()
+                                        * ((float) gpu.getResX() / gpu.getWidth())) - (gpu.getResX() / 2), (int) (e.getY()
+                                        * ((float) gpu.getResY() / gpu.getHeight())) - (gpu.getResY() / 2)));
+                            }
                         }
                     }
                     for (Node node : scene.getGUI()) {
@@ -155,22 +178,35 @@ public abstract class Engine {
         gpu.addMouseListener(new MouseListener() {
             @Override
             public void mouseClicked(MouseEvent e) {
+                boolean cons = false;
                 if (scene != null) {
-                    for (GameEventListener el : listeners) {
-                        if(el instanceof GameMouseListener){
-                            ((GameMouseListener)el).mouseClick(e, new Point((int) (e.getX() * 
-                                    ((float) gpu.getResX() / gpu.getWidth())) - (gpu.getResX() / 2), (int) (e.getY() * 
-                                    ((float) gpu.getResY() / gpu.getHeight())) - (gpu.getResY() / 2)));
-                        }
-                    }
                     for (Node node : scene.getGUI()) {
                         Rectangle r = new Rectangle(node.getX() - (node.getWidth() / 2), node.getY() - (node.getHeight() / 2),
                                 node.getWidth(), node.getHeight());
                         mousePoint.setLocation((int) (e.getX() * ((float) gpu.getResX() / gpu.getWidth())) - (gpu.getResX() / 2),
                                 (int) (e.getY() * ((float) gpu.getResY() / gpu.getHeight())) - (gpu.getResY() / 2));
                         if (r.contains(mousePoint)) {
-                            if (node instanceof Button) {
+                            if (node instanceof Button & node.isVisible()) {
                                 ((ButtonControl) node.getControl()).buttonPerform(e);
+                                cons = true;
+                            }
+                        }
+                    }
+                    if (!cons) {
+                        for (GameEventListener el : listeners) {
+                            if (el instanceof GameMouseListener) {
+                                ((GameMouseListener) el).mouseClick(e, new Point((int) (e.getX()
+                                        * ((float) gpu.getResX() / gpu.getWidth())) - (gpu.getResX() / 2), (int) (e.getY()
+                                        * ((float) gpu.getResY() / gpu.getHeight())) - (gpu.getResY() / 2)));
+                            }
+                        }
+                        for (Extension extension : extensions) {
+                            for (GameEventListener el : extension.getListeners()) {
+                                if (el instanceof GameMouseListener) {
+                                    ((GameMouseListener) el).mouseClick(e, new Point((int) (e.getX()
+                                            * ((float) gpu.getResX() / gpu.getWidth())) - (gpu.getResX() / 2), (int) (e.getY()
+                                            * ((float) gpu.getResY() / gpu.getHeight())) - (gpu.getResY() / 2)));
+                                }
                             }
                         }
                     }
@@ -179,14 +215,8 @@ public abstract class Engine {
 
             @Override
             public void mousePressed(MouseEvent e) {
+                boolean cons = false;
                 if (scene != null) {
-                    for (GameEventListener el : listeners) {
-                        if(el instanceof GameMouseListener){
-                            ((GameMouseListener)el).mousePressed(e, new Point((int) (e.getX() * 
-                                    ((float) gpu.getResX() / gpu.getWidth())) - (gpu.getResX() / 2), (int) (e.getY() * 
-                                    ((float) gpu.getResY() / gpu.getHeight())) - (gpu.getResY() / 2)));
-                        }
-                    }
                     for (Node node : scene.getGUI()) {
                         Rectangle r = new Rectangle(node.getX() - (node.getWidth() / 2), node.getY() - (node.getHeight() / 2),
                                 node.getWidth(), node.getHeight());
@@ -195,6 +225,25 @@ public abstract class Engine {
                         if (r.contains(mousePoint)) {
                             if (node instanceof Button) {
                                 ((ButtonControl) node.getControl()).onPress();
+                                cons = true;
+                            }
+                        }
+                    }
+                    if (!cons) {
+                        for (GameEventListener el : listeners) {
+                            if (el instanceof GameMouseListener) {
+                                ((GameMouseListener) el).mousePressed(e, new Point((int) (e.getX()
+                                        * ((float) gpu.getResX() / gpu.getWidth())) - (gpu.getResX() / 2), (int) (e.getY()
+                                        * ((float) gpu.getResY() / gpu.getHeight())) - (gpu.getResY() / 2)));
+                            }
+                        }
+                        for (Extension extension : extensions) {
+                            for (GameEventListener el : extension.getListeners()) {
+                                if (el instanceof GameMouseListener) {
+                                    ((GameMouseListener) el).mousePressed(e, new Point((int) (e.getX()
+                                            * ((float) gpu.getResX() / gpu.getWidth())) - (gpu.getResX() / 2), (int) (e.getY()
+                                            * ((float) gpu.getResY() / gpu.getHeight())) - (gpu.getResY() / 2)));
+                                }
                             }
                         }
                     }
@@ -203,15 +252,8 @@ public abstract class Engine {
 
             @Override
             public void mouseReleased(MouseEvent e) {
-                
+                boolean cons = false;
                 if (scene != null) {
-                    for (GameEventListener el : listeners) {
-                        if(el instanceof GameMouseListener){
-                            ((GameMouseListener)el).mouseReleased(e, new Point((int) (e.getX() * 
-                                    ((float) gpu.getResX() / gpu.getWidth())) - (gpu.getResX() / 2), (int) (e.getY() * 
-                                    ((float) gpu.getResY() / gpu.getHeight())) - (gpu.getResY() / 2)));
-                        }
-                    }
                     for (Node node : scene.getGUI()) {
                         Rectangle r = new Rectangle(node.getX() - (node.getWidth() / 2), node.getY() - (node.getHeight() / 2),
                                 node.getWidth(), node.getHeight());
@@ -220,6 +262,25 @@ public abstract class Engine {
                         if (r.contains(mousePoint)) {
                             if (node instanceof Button) {
                                 ((ButtonControl) node.getControl()).onRelease();
+                                cons = true;
+                            }
+                        }
+                    }
+                    if (!cons) {
+                        for (GameEventListener el : listeners) {
+                            if (el instanceof GameMouseListener) {
+                                ((GameMouseListener) el).mouseReleased(e, new Point((int) (e.getX()
+                                        * ((float) gpu.getResX() / gpu.getWidth())) - (gpu.getResX() / 2), (int) (e.getY()
+                                        * ((float) gpu.getResY() / gpu.getHeight())) - (gpu.getResY() / 2)));
+                            }
+                        }
+                        for (Extension extension : extensions) {
+                            for (GameEventListener el : extension.getListeners()) {
+                                if (el instanceof GameMouseListener) {
+                                    ((GameMouseListener) el).mouseReleased(e, new Point((int) (e.getX()
+                                            * ((float) gpu.getResX() / gpu.getWidth())) - (gpu.getResX() / 2), (int) (e.getY()
+                                            * ((float) gpu.getResY() / gpu.getHeight())) - (gpu.getResY() / 2)));
+                                }
                             }
                         }
                     }
@@ -228,12 +289,12 @@ public abstract class Engine {
 
             @Override
             public void mouseEntered(MouseEvent e) {
-                
+
             }
 
             @Override
             public void mouseExited(MouseEvent e) {
-                
+
             }
         });
         gpu.addKeyListener(new KeyListener() {
@@ -246,8 +307,25 @@ public abstract class Engine {
             @Override
             public void keyPressed(KeyEvent e) {
                 for (GameEventListener el : listeners) {
-                    if (el instanceof GameKeyListener) {
-                        ((GameKeyListener) el).keyPressed(e, e.getKeyCode());
+                    for (KeyMap key : keys) {
+                        if (key.getCode() == e.getKeyCode()) {
+                            if (el instanceof GameKeyListener) {
+                                ((GameKeyListener) el).keyPressed(e, key.getKey());
+                            }
+                        }
+                    }
+
+                }
+                for (Extension extension : extensions) {
+                    for (GameEventListener el : extension.getListeners()) {
+                        for (KeyMap key : keys) {
+                            if (key.getCode() == e.getKeyCode()) {
+                                if (el instanceof GameKeyListener) {
+                                    ((GameKeyListener) el).keyPressed(e, key.getKey());
+                                }
+                            }
+                        }
+
                     }
                 }
                 for (KeyMap key : keys) {
@@ -263,8 +341,25 @@ public abstract class Engine {
             @Override
             public void keyReleased(KeyEvent e) {
                 for (GameEventListener el : listeners) {
-                    if (el instanceof GameKeyListener) {
-                        ((GameKeyListener) el).keyReleased(e, e.getKeyCode());
+                    for (KeyMap key : keys) {
+                        if (key.getCode() == e.getKeyCode()) {
+                            if (el instanceof GameKeyListener) {
+                                ((GameKeyListener) el).keyReleased(e, key.getKey());
+                            }
+                        }
+                    }
+
+                }
+                for (Extension extension : extensions) {
+                    for (GameEventListener el : extension.getListeners()) {
+                        for (KeyMap key : keys) {
+                            if (key.getCode() == e.getKeyCode()) {
+                                if (el instanceof GameKeyListener) {
+                                    ((GameKeyListener) el).keyReleased(e, key.getKey());
+                                }
+                            }
+                        }
+
                     }
                 }
                 for (KeyMap key : keys) {
@@ -296,8 +391,8 @@ public abstract class Engine {
         triggerList = new ArrayList<>();
         spawnList = new ArrayList<>();
 //</editor-fold>
-        
-        if(settings.isFullScreen()){
+
+        if (settings.isFullScreen()) {
             stage.setUndecorated(true);
             gpu.enterFullScreen(stage, settings.getDisplay(), settings);
         }
@@ -309,7 +404,6 @@ public abstract class Engine {
     }
 
     private void frame2() {
-        frame();
         mouseVelocity.setDirection(mousePoint.x - prevMousePoint.x, mousePoint.y - prevMousePoint.y);
         prevMousePoint.setLocation(mousePoint);
         for (Node n : entityList) {
@@ -317,36 +411,50 @@ public abstract class Engine {
                 n.getControl().perform(n);
             }
         }
-        for (Node n : scene.getGUI()) {
-            if (n.getControl() != null) {
-                n.getControl().perform(n);
-            }
-            if ("entity".equals(n.getType())) {
-                ((Entity) n).update();
+        if (scene != null) {
+            for (Node n : scene.getGUI()) {
+                if (n.getControl() != null) {
+                    n.getControl().perform(n);
+                }
+                if ("entity".equals(n.getType())) {
+                    ((Entity) n).update();
+                }
             }
         }
+        for (Extension extension : extensionRemoval) {
+            extensions.remove(extension);
+            extension.detach();
+        }
+        extensionRemoval.clear();
+        for (Extension ext : extensionAdd) {
+            extensions.add(ext);
+            ext.setEngine(this);
+            ext.init();
+        }
+        extensionAdd.clear();
         extensions.stream().forEach((extension) -> {
             if (extension.isEnabled()) {
                 extension.frame();
             }
         });
         TimeQueue.masterCheck();
+        frame();
         //<editor-fold defaultstate="collapsed" desc="Physics">
         entityList.clear();
         triggerList.clear();
         spawnList.clear();
-        for(Node n : scene.getItems()){
-            switch(n.getType()){
-                case "entity":{
-                    entityList.add((Entity)n);
+        for (Node n : scene.getItems()) {
+            switch (n.getType()) {
+                case "entity": {
+                    entityList.add((Entity) n);
                     break;
                 }
-                case "trigger":{
-                    triggerList.add((Trigger)n);
+                case "trigger": {
+                    triggerList.add((Trigger) n);
                     break;
                 }
-                case "spawn":{
-                    spawnList.add((Spawn)n);
+                case "spawn": {
+                    spawnList.add((Spawn) n);
                     break;
                 }
             }
@@ -372,7 +480,7 @@ public abstract class Engine {
         //<editor-fold defaultstate="collapsed" desc="Collisions (triggers, doors, solid entities">
         for (Entity e : entityList) {
             for (Entity e2 : entityList) {
-                if ((!e.getID().equals(e2.getID())) & (e.getCollisionLayer() == e2.getCollisionLayer())) {
+                if ((!e.getID().equals(e2.getID())) & (e.getCollisionLayer() == e2.getCollisionLayer()) & e.isSolid() & e2.isSolid()) {
                     //collision between e and e2
                     if ((!e.getID().equals(e2.getID()))) {
                         CollisionBlock cb = predictCollision(e, e2);
@@ -451,15 +559,15 @@ public abstract class Engine {
         if (media != null) {
             stage.setTitle(gameTitle + " | FPS: " + Integer.toString(animtimer.getFPS()) + " | MMEQ: "
                     + media.getMediaQueue());
-        }else {
+        } else {
             stage.setTitle(gameTitle + " | FPS: " + Integer.toString(animtimer.getFPS()));
         }
-        if(tractionControl & (media != null)){
-            if(media.getMediaQueue() > TCThreshold){
-                fpsAdj --;
+        if (tractionControl & (media != null)) {
+            if (media.getMediaQueue() > TCThreshold) {
+                fpsAdj--;
                 animtimer.setInterval(1000 / fpsAdj);
-            }else if(fpsAdj != fps){
-                fpsAdj ++;
+            } else if (fpsAdj != fps) {
+                fpsAdj++;
                 animtimer.setInterval(1000 / fpsAdj);
             }
         }
@@ -475,11 +583,14 @@ public abstract class Engine {
     }
 
     //<editor-fold defaultstate="collapsed" desc="Engine Methods">
-
+    public void clearKeys(){
+        keys.clear();
+    }
+    
     public Point getMousePoint() {
         return mousePoint;
     }
-    
+
     public void beginMediaSystem(int sampleRate, int bitDepth, int overhead, int latency) {
         media = new MediaPipeline();
         DingoSoundDriver DSD = new DingoSoundDriver();
@@ -503,15 +614,6 @@ public abstract class Engine {
 
     public void setTractionControl(boolean tractionControl) {
         this.tractionControl = tractionControl;
-    }
-
-    /**
-     * returns the compatible map structure version
-     *
-     * @return
-     */
-    public static int getMapVersion() {
-        return MapVersion;
     }
 
     /**
@@ -548,23 +650,12 @@ public abstract class Engine {
     }
 
     /**
-     * returns the engine's version
-     *
-     * @return
-     */
-    public static String getVersion() {
-        return version;
-    }
-
-    /**
      * Adds an extension class to the Engine
      *
      * @param ext The extension class to add
      */
     public void addExtension(Extension ext) {
-        extensions.add(ext);
-        ext.setEngine(this);
-        ext.init();
+        extensionAdd.add(ext);
     }
 
     /**
@@ -573,16 +664,13 @@ public abstract class Engine {
      * @param ext The extension class to remove
      */
     public void removeExtension(Extension ext) {
-        extensions.remove(ext);
-        ext.detach();
+        extensionRemoval.add(ext);
     }
-    
-    public void clearExtensions(){
-        for (Extension extension : extensions) {
-            extension.detach();
-        }
-        extensions.clear();
+
+    public void clearExtensions() {
+        extensionRemoval.addAll(extensions);
     }
+
     /**
      * Maps a new key to the internal Key Mapper
      *
@@ -622,16 +710,16 @@ public abstract class Engine {
             }
         }
     }
-    
-    public void addListener(GameEventListener e){
+
+    public void addListener(GameEventListener e) {
         listeners.add(e);
     }
-    
-    public void removeListener(GameEventListener e){
+
+    public void removeListener(GameEventListener e) {
         listeners.remove(e);
     }
-    
-    public void clearListeners(){
+
+    public void clearListeners() {
         listeners.clear();
     }
 //</editor-fold>
@@ -809,7 +897,7 @@ public abstract class Engine {
         int x;
         int y;
         Rectangle r;
-        
+
         if (v.getX() == 0) {
             XAxis = 0;
         } else if (v.getX() < 0) {
@@ -984,7 +1072,7 @@ public abstract class Engine {
         gpu.setScene(s);
         scene = s;
     }
-    
+
     /**
      * called every time a new frame is drawn.
      */
@@ -996,12 +1084,14 @@ public abstract class Engine {
      * @param spawn the corresponding spawner
      * @param e the entity object generated by the spawner
      */
-    public void onSpawning(Spawn spawn, Entity e){}
+    public void onSpawning(Spawn spawn, Entity e) {
+    }
 
     /**
      * called every time the physics engine finishes processing.
      */
-    public void postPhysicsTick(){}
+    public void postPhysicsTick() {
+    }
 
     /**
      * called whenever a collision is detected.
@@ -1009,7 +1099,8 @@ public abstract class Engine {
      * @param e1
      * @param e2
      */
-    public void onCollision(Entity e1, Entity e2){}
+    public void onCollision(Entity e1, Entity e2) {
+    }
 
     /**
      * called in your main class. put all of your startup code in here
@@ -1021,14 +1112,16 @@ public abstract class Engine {
      *
      * @param key The key that was pressed
      */
-    public void KeyPressed(String key){}
+    public void KeyPressed(String key) {
+    }
 
     /**
      * Called when the internal KeyMapper detects a key release
      *
      * @param key The key that was released
      */
-    public void KeyReleased(String key){}
+    public void KeyReleased(String key) {
+    }
 
     public void shutdown() {
         if (media != null) {

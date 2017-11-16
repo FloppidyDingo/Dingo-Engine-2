@@ -14,6 +14,11 @@ public class Light {
     private int x;
     private int y;
     private int color;
+    private boolean visible;
+
+    public Light() {
+        this.visible = true;
+    }
     protected enum type{
         Box, PointRay, Directional, Circle, Rectangle
     }
@@ -63,4 +68,13 @@ public class Light {
     public type getType(){
         return currentType;
     }
+
+    public boolean isVisible() {
+        return visible;
+    }
+
+    public void setVisible(boolean visible) {
+        this.visible = visible;
+    }
+    
 }

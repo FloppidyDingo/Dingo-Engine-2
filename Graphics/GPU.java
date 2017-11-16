@@ -11,12 +11,13 @@ import Engine.Settings;
 import objects.Node;
 import java.awt.AlphaComposite;
 import java.awt.Color;
-import java.awt.DisplayMode;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.GraphicsDevice;
 import java.awt.GraphicsEnvironment;
 import java.awt.RenderingHints;
+import java.awt.geom.AffineTransform;
+import java.awt.image.AffineTransformOp;
 import java.awt.image.BufferStrategy;
 import java.awt.image.BufferedImage;
 import java.util.Comparator;
@@ -36,7 +37,6 @@ public class GPU extends JPanel{
     private final int color;
     private boolean fullScreen;
     private BufferStrategy FB;
-    private Engine engine;
 
     public void setScene(Scene s) {
         scene = s;
@@ -60,10 +60,33 @@ public class GPU extends JPanel{
         overlayGraphics.fillRect(0, 0, overlay.getWidth(), overlay.getHeight());
         overlayGraphics.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 1));
         //<editor-fold defaultstate="collapsed" desc="scene">
+        AffineTransform at;
+        int sx;
+        int sy;
+        int tx;
+        int ty;
         for(Node item : scene.getItems()){
             if (item.isVisible()) {
                 BufferedImage temp = item.render(this);
                 if (temp != null) {
+                    sx = 1;
+                    sy = 1;
+                    tx = 0;
+                    ty = 0;
+                    if (item.isInvertX()) {
+                        sy = -1;
+                        ty = -item.getHeight();
+                    }
+                    if(item.isInvertY()){
+                        sx = -1;
+                        tx = -item.getWidth();
+                    }
+                    at = AffineTransform.getScaleInstance(sx, sy);
+                    at.translate(tx, ty);
+                    
+                    AffineTransformOp ato = new AffineTransformOp(at, AffineTransformOp.TYPE_NEAREST_NEIGHBOR);
+                    temp = ato.filter(temp, null);
+                    frameBuffer.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, item.getOpacity()));
                     frameBuffer.drawImage(temp, item.getX() - (temp.getWidth() / 2) + (frame.getWidth() / 2),
                             item.getY() - (temp.getHeight() / 2) + (frame.getHeight() / 2), null);
                 }
@@ -73,53 +96,54 @@ public class GPU extends JPanel{
         //<editor-fold defaultstate="collapsed" desc="Lights">
         scene.getLights().sort(Comparator.comparing(Light::getBrightness));
         for(Light lTemp : scene.getLights()){
-            switch (lTemp.getType()) {
-                case Circle: {
-                    CircleLight light = (CircleLight)lTemp;
-                    lightGraphics.setComposite(AlphaComposite.getInstance(AlphaComposite.CLEAR, 1));
-                    lightGraphics.fillOval(light.getX() - (light.getRadius()) + (frame.getWidth() / 2),
-                            light.getY() - (light.getRadius()) + (frame.getHeight() / 2), light.getRadius() * 2, light.getRadius() * 2);
-                    lightGraphics.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 1 - light.getBrightness()));
-                    lightGraphics.setColor(new Color(light.getColor()));
-                    lightGraphics.fillOval(light.getX() - (light.getRadius()) + (frame.getWidth() / 2),
-                            light.getY() - (light.getRadius()) + (frame.getHeight() / 2), light.getRadius() * 2, light.getRadius() * 2);
-                    break;
-                }
-                case Rectangle:{
-                    RectangleLight light = (RectangleLight)lTemp;
-                    lightGraphics.setComposite(AlphaComposite.getInstance(AlphaComposite.CLEAR, 1));
-                    lightGraphics.fillRect(light.getX() - (light.getWidth() / 2) + (frame.getWidth() / 2),
-                            light.getY() - (light.getHeight() / 2) + (frame.getHeight() / 2), light.getWidth(), light.getHeight());
-                    lightGraphics.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 1 - light.getBrightness()));
-                    lightGraphics.setColor(new Color(light.getColor()));
-                    lightGraphics.fillRect(light.getX() - (light.getWidth() / 2) + (frame.getWidth() / 2),
-                            light.getY() - (light.getHeight() / 2) + (frame.getHeight() / 2), light.getWidth(), light.getHeight());
-                    break;
-                }
-                case Box:{
-                    BoxLight light = (BoxLight)lTemp;
-                    lightGraphics.setComposite(AlphaComposite.getInstance(AlphaComposite.CLEAR, 1));
-                    lightGraphics.fillRect(light.getX() - (light.getWidth() / 2) + (frame.getWidth() / 2),
-                            light.getY() - (light.getWidth() / 2) + (frame.getHeight() / 2), light.getWidth(), light.getWidth());
-                    lightGraphics.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 1 - light.getBrightness()));
-                    lightGraphics.setColor(new Color(light.getColor()));
-                    lightGraphics.fillRect(light.getX() - (light.getWidth() / 2) + (frame.getWidth() / 2),
-                            light.getY() - (light.getWidth() / 2) + (frame.getHeight() / 2), light.getWidth(), light.getWidth());
-                    break;
+            if (lTemp.isVisible()) {
+                switch (lTemp.getType()) {
+                    case Circle: {
+                        CircleLight light = (CircleLight) lTemp;
+                        lightGraphics.setComposite(AlphaComposite.getInstance(AlphaComposite.CLEAR, 1));
+                        lightGraphics.fillOval(light.getX() - (light.getRadius()) + (frame.getWidth() / 2),
+                                light.getY() - (light.getRadius()) + (frame.getHeight() / 2), light.getRadius() * 2, light.getRadius() * 2);
+                        lightGraphics.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 1 - light.getBrightness()));
+                        lightGraphics.setColor(new Color(light.getColor()));
+                        lightGraphics.fillOval(light.getX() - (light.getRadius()) + (frame.getWidth() / 2),
+                                light.getY() - (light.getRadius()) + (frame.getHeight() / 2), light.getRadius() * 2, light.getRadius() * 2);
+                        break;
+                    }
+                    case Rectangle: {
+                        RectangleLight light = (RectangleLight) lTemp;
+                        lightGraphics.setComposite(AlphaComposite.getInstance(AlphaComposite.CLEAR, 1));
+                        lightGraphics.fillRect(light.getX() - (light.getWidth() / 2) + (frame.getWidth() / 2),
+                                light.getY() - (light.getHeight() / 2) + (frame.getHeight() / 2), light.getWidth(), light.getHeight());
+                        lightGraphics.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 1 - light.getBrightness()));
+                        lightGraphics.setColor(new Color(light.getColor()));
+                        lightGraphics.fillRect(light.getX() - (light.getWidth() / 2) + (frame.getWidth() / 2),
+                                light.getY() - (light.getHeight() / 2) + (frame.getHeight() / 2), light.getWidth(), light.getHeight());
+                        break;
+                    }
+                    case Box: {
+                        BoxLight light = (BoxLight) lTemp;
+                        lightGraphics.setComposite(AlphaComposite.getInstance(AlphaComposite.CLEAR, 1));
+                        lightGraphics.fillRect(light.getX() - (light.getWidth() / 2) + (frame.getWidth() / 2),
+                                light.getY() - (light.getWidth() / 2) + (frame.getHeight() / 2), light.getWidth(), light.getWidth());
+                        lightGraphics.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 1 - light.getBrightness()));
+                        lightGraphics.setColor(new Color(light.getColor()));
+                        lightGraphics.fillRect(light.getX() - (light.getWidth() / 2) + (frame.getWidth() / 2),
+                                light.getY() - (light.getWidth() / 2) + (frame.getHeight() / 2), light.getWidth(), light.getWidth());
+                        break;
+                    }
                 }
             }
         }
         //</editor-fold>
         //<editor-fold defaultstate="collapsed" desc="GUI">
-        for(Node item : scene.getGUI()){
-            if (item.isVisible()) {
-                BufferedImage temp = item.render(this);
-                if (temp != null) {
-                    overlayGraphics.drawImage(temp, item.getX() - (temp.getWidth() / 2) + (frame.getWidth() / 2),
-                            item.getY() - (temp.getHeight() / 2) + (frame.getHeight() / 2), null);
-                }
+        scene.getGUI().stream().filter((item) -> (item.isVisible())).forEachOrdered((item) -> {
+            BufferedImage temp = item.render(this);
+            if (temp != null) {
+                overlayGraphics.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, item.getOpacity()));
+                overlayGraphics.drawImage(temp, item.getX() - (temp.getWidth() / 2) + (frame.getWidth() / 2),
+                        item.getY() - (temp.getHeight() / 2) + (frame.getHeight() / 2), null);
             }
-        }
+        });
         //</editor-fold>
         frameBuffer.dispose();
         lightGraphics.dispose();
@@ -166,7 +190,6 @@ public class GPU extends JPanel{
         overlay = new BufferedImage(s.getInternalResX(), s.getInternalResY(), s.getColorModel());
         buffer = new BufferedImage(s.getInternalResX(), s.getInternalResY(), s.getColorModel());
         color = s.getColorModel();
-        this.engine = engine;
     }
     
     public void setInternalResolution(int resx, int resy){
@@ -195,7 +218,6 @@ public class GPU extends JPanel{
     public void enterFullScreen(JFrame frame, int display, Settings set){
         GraphicsDevice device = GraphicsEnvironment.getLocalGraphicsEnvironment().getScreenDevices()[display];
         device.setFullScreenWindow(frame);
-        device.setDisplayMode(new DisplayMode(set.getResolutionX(), set.getResolutionY(), 32, DisplayMode.REFRESH_RATE_UNKNOWN));
         frame.revalidate();
         frame.setIgnoreRepaint(true);
         frame.createBufferStrategy(2);

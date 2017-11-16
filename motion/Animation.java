@@ -120,6 +120,7 @@ public class Animation {
     
     public void reset(){
         currentFrame = 0;
+        currentSkin = 0;
     }
 
     public int getCurrentSkin() {

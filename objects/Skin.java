@@ -4,8 +4,10 @@
  */
 package objects;
 
+import Engine.Utils;
 import java.awt.Color;
 import java.awt.image.BufferedImage;
+import java.awt.image.DataBufferByte;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -92,6 +94,7 @@ public class Skin {
     public void bufferSkinDef(String url) throws IOException{
         try {
             BufferedImage img = ImageIO.read(new File(url));
+            byte[] pixels = ((DataBufferByte) img.getRaster().getDataBuffer()).getData();
             int fx = 0;
             int fy = 0;
             int state = 0;
@@ -99,8 +102,8 @@ public class Skin {
                 for(int x = 0; x < img.getWidth(); x++){
                     switch(state){
                         case 0:{
-                            if(img.getRGB(x, y) == Color.BLACK.getRGB()){
-                                img.setRGB(x, y, Color.RED.getRGB());
+                            if(pixels[x + (y * img.getWidth())] == (byte)0x00){
+                                pixels[x + (y * img.getWidth())] = (byte)0xff;
                                 fx = x;
                                 fy = y;
                                 state = 1;
@@ -108,11 +111,11 @@ public class Skin {
                             break;
                         }
                         case 1:{
-                            if(img.getRGB(x, y) == Color.BLACK.getRGB()){
-                                img.setRGB(x, y, Color.RED.getRGB());
-                                for(int y2 = y + 1; y2 < img.getHeight(); y2++){
-                                    if(img.getRGB(x, y2) == Color.BLACK.getRGB()){
-                                        img.setRGB(x, y2, Color.RED.getRGB());
+                            if(pixels[x + (y * img.getWidth())] == (byte)0x00){
+                                pixels[x + (y * img.getWidth())] = (byte)0xff;
+                                for(int y2 = y; y2 < img.getHeight(); y2++){
+                                    if(pixels[x + (y2 * img.getWidth())] == (byte)0x00){
+                                        pixels[x + (y2 * img.getWidth())] = (byte)0xff;
                                         this.addFrame(fx, fy, x, y2);
                                         state = 0;
                                         break;
@@ -135,6 +138,10 @@ public class Skin {
      */
     public void setBaseImage(BufferedImage img) {
         image = img;
+    }
+    
+    public void setBaseImage(String url) throws IOException {
+        image = Utils.generateImage(url);
     }
     
     /**

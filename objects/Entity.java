@@ -7,6 +7,7 @@
 package objects;
 
 import Graphics.GPU;
+import java.awt.Point;
 import java.awt.Rectangle;
 import java.awt.image.BufferedImage;
 import java.util.ArrayList;
@@ -23,7 +24,7 @@ public class Entity extends Node{
     protected Skin skin;
     private Object userData;
     private String ID;
-    private Vector dir = new Vector();
+    private Vector dir;
     private int mass;
     private boolean solid;
     private boolean active;
@@ -135,8 +136,9 @@ public class Entity extends Node{
      * @param ID
      */
     public Entity(Skin s, String ID){
+        this.dir = new Vector();
         this.bound = new Rectangle();
-        this.drawOffScreen = true;
+        this.drawOffScreen = false;
         ani = new ArrayList<>();
         type = "entity";
         skin = s;
@@ -153,8 +155,9 @@ public class Entity extends Node{
      * @param ID
      */
     public Entity(Skin s, int x, int y, String ID){
+        this.dir = new Vector();
         this.bound = new Rectangle();
-        this.drawOffScreen = true;
+        this.drawOffScreen = false;
         ani = new ArrayList<>();
         type = "entity";
         skin = s;
@@ -174,8 +177,9 @@ public class Entity extends Node{
      * @param ID
      */
     public Entity(Skin s, int x, int y, Object UD, String ID){
+        this.dir = new Vector();
         this.bound = new Rectangle();
-        this.drawOffScreen = true;
+        this.drawOffScreen = false;
         ani = new ArrayList<>();
         type = "entity";
         skin = s;
@@ -217,6 +221,17 @@ public class Entity extends Node{
     public void removeAni(Animation e) {
         ani.remove(e);
     }
+    
+    public Animation getAni(String ID){
+        Animation a = null;
+        for (Animation animation : ani) {
+            if (animation.getID().equals(ID)) {
+                a = animation;
+                break;
+            }
+        }
+        return a;
+    }
 
     public void update(){
         for (Animation animation : ani) {
@@ -232,7 +247,8 @@ public class Entity extends Node{
         if(drawOffScreen){
             return image;
         }else{
-            Rectangle r = new Rectangle(0, 0, gpu.getResX(), gpu.getResY());
+            Rectangle r = new Rectangle(0 - (gpu.getResX() / 2), 0 - (gpu.getResY() / 2),
+                    gpu.getResX(), gpu.getResY());
             if(this.getBound().intersects(r)){
                 return image;
             }
@@ -260,4 +276,5 @@ public class Entity extends Node{
     public String toString(){
         return ID;
     }
+ 
 }

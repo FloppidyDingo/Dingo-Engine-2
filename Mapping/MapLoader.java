@@ -51,7 +51,7 @@ public class MapLoader {
             SAXHandler handler = new SAXHandler();
             handler.setImageURL(imageFolder);
             saxParser.parse(mapFolder + name, handler);
-            if(handler.getVersion() > Engine.getMapVersion()){
+            if(handler.getVersion() > Engine.MAPVERSION){
                 throw new InvalidVersionException("Map designed for newer version of the Dingo Engine.");
             }
             map = handler.getMap();
@@ -72,10 +72,43 @@ public class MapLoader {
         private int version;
         private Trigger tb;
         private Entity ent;
+        private List<Definition> defs;
         
         @Override
         public void startElement(String uri, String localName, String qName, Attributes attributes) throws SAXException {
             switch (qName) {
+                case "definition":{
+                    Definition def = new Definition();
+                    def.setId(attributes.getValue("id"));
+                    def.setVisible(Boolean.parseBoolean(attributes.getValue("visible")));
+                    def.setType(attributes.getValue("type"));
+                    switch(def.getType()){
+                        case "entity":{
+                            def.setImageURL(attributes.getValue("URL"));
+                            def.setSkinID(attributes.getValue("skin"));
+                            def.setDrawOffScreen(Boolean.parseBoolean(attributes.getValue("drawoffscreen")));
+                            def.setActive(Boolean.parseBoolean(attributes.getValue("active")));
+                            def.setSolid(Boolean.parseBoolean(attributes.getValue("solid")));
+                            def.setMass(Integer.parseInt(attributes.getValue("mass")));
+                            break;
+                        }
+                        case "light":{
+                            def.setLightType(attributes.getValue("lighttype"));
+                            def.setBrightness(Integer.parseInt(attributes.getValue("brightness")));
+                            def.setWidth(Integer.parseInt(attributes.getValue("width")));
+                            def.setHeight(Integer.parseInt(attributes.getValue("height")));
+                            def.setRadius(Integer.parseInt(attributes.getValue("radius")));
+                            break;
+                        }
+                        case "spawn":{
+                            def.setTime(Integer.parseInt(attributes.getValue("time")));
+                            def.setUserData(attributes.getValue("userdata"));
+                            break;
+                        }
+                    }
+                    defs.add(def);
+                    break;
+                }
                 case "map":{
                     version = Integer.parseInt(attributes.getValue("version"));
                     break;
@@ -269,6 +302,158 @@ public class MapLoader {
 
         public int getVersion() {
             return version;
+        }
+        
+    }
+    
+    public class Definition{
+        private String type;//type of def; light, entity, and spawner
+        //fields for lights
+        private String lightType;
+        private int brightness;
+        private int width;
+        private int height;
+        private int radius;
+        //fields for Entities
+        private String imageURL;
+        private String skinID;
+        private boolean solid;
+        private int mass;
+        private boolean active;
+        private boolean drawOffScreen;
+        //fields for spawners
+        private String userData;
+        private int time;
+        //fields for all types
+        private String id;
+        private boolean visible;
+
+        public String getType() {
+            return type;
+        }
+
+        public void setType(String type) {
+            this.type = type;
+        }
+
+        public String getLightType() {
+            return lightType;
+        }
+
+        public void setLightType(String lightType) {
+            this.lightType = lightType;
+        }
+
+        public int getBrightness() {
+            return brightness;
+        }
+
+        public void setBrightness(int brightness) {
+            this.brightness = brightness;
+        }
+
+        public int getWidth() {
+            return width;
+        }
+
+        public void setWidth(int width) {
+            this.width = width;
+        }
+
+        public int getHeight() {
+            return height;
+        }
+
+        public void setHeight(int height) {
+            this.height = height;
+        }
+
+        public int getRadius() {
+            return radius;
+        }
+
+        public void setRadius(int radius) {
+            this.radius = radius;
+        }
+
+        public String getImageURL() {
+            return imageURL;
+        }
+
+        public void setImageURL(String imageURL) {
+            this.imageURL = imageURL;
+        }
+
+        public String getSkinID() {
+            return skinID;
+        }
+
+        public void setSkinID(String skinID) {
+            this.skinID = skinID;
+        }
+
+        public boolean isSolid() {
+            return solid;
+        }
+
+        public void setSolid(boolean solid) {
+            this.solid = solid;
+        }
+
+        public int getMass() {
+            return mass;
+        }
+
+        public void setMass(int mass) {
+            this.mass = mass;
+        }
+
+        public boolean isActive() {
+            return active;
+        }
+
+        public void setActive(boolean active) {
+            this.active = active;
+        }
+
+        public boolean isDrawOffScreen() {
+            return drawOffScreen;
+        }
+
+        public void setDrawOffScreen(boolean drawOffScreen) {
+            this.drawOffScreen = drawOffScreen;
+        }
+
+        public String getUserData() {
+            return userData;
+        }
+
+        public void setUserData(String userData) {
+            this.userData = userData;
+        }
+
+        public int getTime() {
+            return time;
+        }
+
+        public void setTime(int time) {
+            this.time = time;
+        }
+
+        public String getId() {
+            return id;
+        }
+
+        public void setId(String id) {
+            this.id = id;
+        }
+
+        public boolean isVisible() {
+            return visible;
+        }
+
+        public void setVisible(boolean visible) {
+            this.visible = visible;
         }
         
     }

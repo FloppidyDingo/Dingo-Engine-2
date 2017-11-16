@@ -19,15 +19,19 @@ public class Label extends Node{
     private String text;
     private GraphicsFont font;
     private BufferedImage img;
+    private BufferedImage fb2;
+    String strings[];
     public int offsetX;
     public int offsetY;
     public int padding;
+    private float scale;
 
     public Label() {
         this.img = new BufferedImage(1, 1, BufferedImage.TYPE_INT_ARGB);
         font = new GraphicsFont();
         padding = 1;
-        text = "sampletext";
+        scale = 1;
+        this.setText("sample text");
     }
 
     @Override
@@ -39,9 +43,16 @@ public class Label extends Node{
         g2.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 1));
         g2.setFont(font.getFont());
         g2.setColor(font.getColor());
-        g2.drawString(text, offsetX, font.getFont().getSize() + offsetY);
+        int i = 0;
+        for (String string : strings) {
+            g2.drawString(string, offsetX, font.getFont().getSize() + offsetY + (font.getFont().getSize() * i));
+            i++;
+        }
         g2.dispose();
-        return img;
+        g2 = (Graphics2D)fb2.getGraphics();
+        g2.drawImage(img, 0, 0, fb2.getWidth(), fb2.getHeight(), null);
+        g2.dispose();
+        return fb2;
     }
 
     @Override
@@ -76,9 +87,17 @@ public class Label extends Node{
 
     public void setText(String label) {
         this.text = label;
-        int lines = label.split("\\r?\\n").length;
-        this.img = new BufferedImage(label.length() * (int)((font.getFont().getSize() + padding) * font.getScale()) + font.getPaddingW(),
+        strings = label.split("\\r?\\n");
+        int len = 0;
+        for (String string : strings) {
+            if(string.length() > len){
+                len = string.length();
+            }
+        }
+        int lines = strings.length;
+        this.img = new BufferedImage((len + padding) * (int)((font.getFont().getSize()) * font.getScale()) + font.getPaddingW(),
                lines * font.getFont().getSize() + font.getPaddingH(), BufferedImage.TYPE_INT_ARGB);
+        fb2 = new BufferedImage((int)(img.getWidth() * scale) + 1, (int)(img.getHeight() * scale) + 1, BufferedImage.TYPE_INT_ARGB);
     }
 
     public int getOffsetX() {
@@ -105,4 +124,8 @@ public class Label extends Node{
         return padding;
     }
     
+    public void setScale(float scale){
+        this.scale = scale;
+        fb2 = new BufferedImage((int)(img.getWidth() * scale) + 1, (int)(img.getHeight() * scale) + 1, BufferedImage.TYPE_INT_ARGB);
+    }
 }

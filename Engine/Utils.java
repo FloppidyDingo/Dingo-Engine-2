@@ -6,13 +6,17 @@ import java.awt.Color;
 import java.awt.Font;
 import java.awt.FontFormatException;
 import java.awt.GraphicsEnvironment;
+import java.awt.Point;
+import java.awt.Rectangle;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
 import javax.imageio.ImageIO;
 import objects.Entity;
+import objects.Node;
 import objects.Skin;
 
 /**
@@ -20,7 +24,7 @@ import objects.Skin;
  * @author Jaca
  */
 public class Utils {
-    private static final Random r = new Random();
+    private static final Random rng = new Random();
 
     /**
      *Used as a reference that an object is above or to the left of another.
@@ -74,7 +78,7 @@ public class Utils {
      * @return
      */
     public static int randInt(int min, int max) {
-        int randomNum = r.nextInt((max - min) + 1) + min;
+        int randomNum = rng.nextInt((max - min) + 1) + min;
         return randomNum;
     }
     
@@ -143,12 +147,26 @@ public class Utils {
     }
     
     public static void reseedRNG(long seed){
-        r.setSeed(seed);
+        rng.setSeed(seed);
     }
     
     public static void registerFont(String url) throws FontFormatException, IOException{
         GraphicsEnvironment ge
                 = GraphicsEnvironment.getLocalGraphicsEnvironment();
         ge.registerFont(Font.createFont(Font.TRUETYPE_FONT, new File(url)));
+    }
+    
+    public static List<Node> rayTest(List<Node> nodes, Point point){
+        List<Node> hits = new ArrayList<>();
+        Rectangle rec;
+        for (Node node : nodes) {
+            rec = new Rectangle();
+            rec.setBounds(node.getX() - (node.getWidth() / 2), node.getY() - (node.getHeight() / 2), 
+                    node.getWidth(), node.getHeight());
+            if(rec.contains(point)){
+                hits.add(node);
+            }
+        }
+        return hits;
     }
 }

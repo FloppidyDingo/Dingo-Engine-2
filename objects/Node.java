@@ -7,6 +7,7 @@ package objects;
 
 import Controls.Control;
 import Graphics.GPU;
+import java.awt.Point;
 import java.awt.Rectangle;
 import java.awt.image.BufferedImage;
 
@@ -22,6 +23,9 @@ public abstract class Node {
     protected int collisionLayer;
     private boolean visible = true;
     private String ID;
+    private boolean invertX;
+    private boolean invertY;
+    private float opacity = 1;
     
     public String getType() {
         return type;
@@ -82,10 +86,39 @@ public abstract class Node {
     public void setID(String ID) {
         this.ID = ID;
     }
+
+    public boolean isInvertX() {
+        return invertX;
+    }
+
+    public void setInvertX(boolean invertX) {
+        this.invertX = invertX;
+    }
+
+    public boolean isInvertY() {
+        return invertY;
+    }
+
+    public void setInvertY(boolean invertY) {
+        this.invertY = invertY;
+    }
     
     public abstract BufferedImage render(GPU gpu);
     
     public abstract int getWidth();
     
     public abstract int getHeight();
+
+    public float getOpacity() {
+        return opacity;
+    }
+
+    public void setOpacity(float opacity) {
+        this.opacity = opacity;
+    }
+    
+    public void setPosition(Point get) {
+        this.setX((int)get.getX());
+        this.setY((int)get.getY());
+    }
 }

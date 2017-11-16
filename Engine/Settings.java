@@ -21,6 +21,7 @@ public class Settings {
     private boolean fullScreen;
     private int display;
     private boolean GPUAcceleration;
+    private boolean debug;
 
     public Settings() {
         this.colorModel = BufferedImage.TYPE_INT_ARGB;
@@ -32,6 +33,7 @@ public class Settings {
         this.fullScreen = false;
         this.display = 0;
         this.GPUAcceleration = true;
+        this.debug = false;
     }
 
     public int getResolutionX() {
@@ -104,6 +106,14 @@ public class Settings {
 
     public void setGPUAcceleration(boolean GPUAcceleration) {
         this.GPUAcceleration = GPUAcceleration;
+    }
+
+    public void setDebugMode(boolean b) {
+        debug = b;
+    }
+    
+    public boolean isDebugMode(){
+        return debug;
     }
     
 }

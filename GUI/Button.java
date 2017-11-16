@@ -6,10 +6,14 @@
 package GUI;
 
 import Controls.BaseButtonControl;
+import Engine.Utils;
 import Graphics.GPU;
 import java.awt.AlphaComposite;
 import java.awt.Graphics2D;
 import java.awt.image.BufferedImage;
+import java.io.IOException;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import objects.Node;
 
 
@@ -37,6 +41,9 @@ public class Button extends Node{
     }
     
     public Button(int w, int h) {
+        //this.idle = Utils.generateImage(this.getClass().getResource("deselected.png").toString());
+        //this.hover = Utils.generateImage(this.getClass().getResource("hover.png").toString());
+        //this.select = Utils.generateImage(this.getClass().getResource("selected.png").toString());
         this.setControl(new BaseButtonControl(this));
         label = new Label();
         img = new BufferedImage(w, h, BufferedImage.TYPE_INT_ARGB);

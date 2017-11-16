@@ -12,7 +12,7 @@ import java.awt.event.KeyEvent;
  * @author James
  */
 public class GameKeyListener extends GameEventListener{
-    public void keyPressed(KeyEvent e, int key){}
+    public void keyPressed(KeyEvent e, String id){}
     
-    public void keyReleased(KeyEvent e, int key){}
+    public void keyReleased(KeyEvent e, String id){}
 }
